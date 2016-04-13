@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
 		case 's':
 			{
 				findROI.saveROIImage();
+				findROI.findBlobs();
 				//test
 				const std::vector<cv::Point> &coord = findROI.getCartCoord();
 				if (coord.size() == 3)

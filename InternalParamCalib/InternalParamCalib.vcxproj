@@ -77,9 +77,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="FindBlobs.h" />
     <ClInclude Include="FindCalibBoardROI.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FindBlobs.cpp" />
     <ClCompile Include="FindCalibBoardROI.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

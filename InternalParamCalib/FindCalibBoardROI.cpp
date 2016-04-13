@@ -58,7 +58,7 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 			cv::convexHull(self->m_vPointList, self->m_vHullPointList, true);
 			cv::line(self->m_mScribbleImg, self->m_pPrePt,
 				self->m_pFirstPt, CV_RGB(255,0,0), 2, CV_AA);
-			cv::fillConvexPoly(self->m_mScribbleMask, self->m_vHullPointList, 255, CV_AA);
+			cv::fillConvexPoly(self->m_mScribbleMask, self->m_vHullPointList, 1, CV_AA);
 
 			self->m_bRButtonDown = true;
 			self->m_vPointList.clear();
@@ -119,7 +119,7 @@ int findCalibROI::init(const std::string& imgFileName)
 	m_vHullPointList.clear();
 	m_vCartCoord.clear();
 
-	m_mInputImg = cv::imread(m_sImgFileName, CV_LOAD_IMAGE_COLOR);
+	m_mInputImg = cv::imread(m_sImgFileName, CV_LOAD_IMAGE_GRAYSCALE);
 	if(!m_mInputImg.data )                              
 	{
 		std::cout <<  "Could not open or find the image: " << m_sImgFileName << std::endl ;
@@ -195,4 +195,15 @@ void findCalibROI::nextImage()
 	{
 		std::cout <<  "could not initialize" << std::endl ;
 	}
+}
+
+const cv::Mat& findCalibROI::findBlobs()
+{
+	m_mBlobImg.create(2, m_mInputImg.size, m_mInputImg.type());
+	m_mBlobImg = 0;
+	
+	cv::threshold(m_mOutputImg, m_mBlobImg, 255, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
+	cv::imwrite("binary.jpg", m_mBlobImg);
+
+	return m_mBlobImg;
 }
