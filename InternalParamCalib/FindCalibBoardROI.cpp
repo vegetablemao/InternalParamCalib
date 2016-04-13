@@ -62,7 +62,7 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 
 			self->m_bRButtonDown = true;
 			self->m_vPointList.clear();
-			self->m_vHullPointList.clear();
+			//self->m_vHullPointList.clear();
 
 		}
 		else
@@ -202,7 +202,15 @@ const cv::Mat& findCalibROI::findBlobs()
 	m_mBlobImg.create(2, m_mInputImg.size, m_mInputImg.type());
 	m_mBlobImg = 0;
 	
-	cv::threshold(m_mOutputImg, m_mBlobImg, 255, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
+	cv::Rect  bRect = cv::boundingRect(m_vHullPointList);//up-right bounding rectangle
+	cv::Mat roiImg(m_mOutputImg, bRect);
+	cv::Mat blobImg(bRect.size(), roiImg.type());
+	//cv::Mat roiMask;
+	//roiImg.create(2, m_mBlobImg.size, CV_8UC1);
+	//roiImg = 0;
+	cv::threshold(roiImg, blobImg, 255, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
+	cv::Mat roiBImg(m_mBlobImg, bRect);
+	blobImg.copyTo(roiBImg);
 	cv::imwrite("binary.jpg", m_mBlobImg);
 
 	return m_mBlobImg;
