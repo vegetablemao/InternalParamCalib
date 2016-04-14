@@ -33,7 +33,8 @@ int main(int argc, char *argv[])
 		case 's':
 			{
 				findROI.saveROIImage();
-				fb.findBlobsContours(findROI.getBlobsImg());
+				const cv::contourContainer &contours = fb.findBlobsContours(findROI.getBlobsImg());
+				fb.findCentroids(contours);
 				//test
 				const std::vector<cv::Point> &coord = findROI.getCartCoord();
 				if (coord.size() == 3)

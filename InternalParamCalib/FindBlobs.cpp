@@ -16,7 +16,7 @@ namespace cv
 		return findCalibROI::init(imgFileName);
 
 	}
-	contourContainer& findBlobs::findBlobsContours(const Mat& blobImg)
+	const contourContainer& findBlobs::findBlobsContours(const Mat& blobImg)
 	{
 		m_vContours.clear();
 		findContours(blobImg, m_vContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
@@ -25,9 +25,31 @@ namespace cv
 			std::cout << "couldn't find any contours!" << std::endl;
 			return m_vContours;
 		}
-		Mat dst = Mat::zeros(m_uiRows, m_uiCols, CV_8UC1);
-		drawContours(dst, m_vContours, -1, 255);
-		imwrite("contours.jpg", dst);
+		m_mOutputImg = Mat::zeros(m_uiRows, m_uiCols, CV_8UC3);
+		drawContours(m_mOutputImg, m_vContours, -1, CV_RGB(255,255,255));
+		imwrite("contours.jpg", m_mOutputImg);
 		return m_vContours;
+	}
+	const centroidContainer& findBlobs::findCentroids(const contourContainer& contours)
+	{
+		m_vCentroids.clear();
+
+		/// Get the moments
+		std::vector<Moments> mu(contours.size() );
+		for( int i = 0; i < contours.size(); i++ )
+		{ 
+			mu[i] = moments( contours[i], false );
+		}
+
+		///  Get the mass centers:
+		for( int i = 0; i < contours.size(); i++ )
+		{ 
+			int cx = static_cast<int>( mu[i].m10/mu[i].m00 );
+			int cy = static_cast<int>( mu[i].m01/mu[i].m00 );
+			m_vCentroids.push_back(Point(cx, cy));
+			circle(m_mOutputImg, Point(cx, cy), 2, CV_RGB(255,0,0), -1 );
+		}
+		imwrite("centroids.jpg", m_mOutputImg);
+		return m_vCentroids;
 	}
 }
