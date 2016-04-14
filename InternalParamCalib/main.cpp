@@ -1,4 +1,5 @@
 ﻿#include "FindCalibBoardROI.h"
+#include "FindBlobs.h"
 #include <iostream>
 
 int main(int argc, char *argv[])
@@ -10,7 +11,8 @@ int main(int argc, char *argv[])
 
 
 	char * defaultImgFileName = "fisheye\\k11.jpg";
-	findCalibROI findROI;
+	cv::findBlobs fb;
+	findCalibROI& findROI = fb;
 
 	if (findROI.init(filename) == -1)
 	{
@@ -31,7 +33,7 @@ int main(int argc, char *argv[])
 		case 's':
 			{
 				findROI.saveROIImage();
-				findROI.findBlobs();
+				fb.findBlobsContours(findROI.getBlobsImg());
 				//test
 				const std::vector<cv::Point> &coord = findROI.getCartCoord();
 				if (coord.size() == 3)

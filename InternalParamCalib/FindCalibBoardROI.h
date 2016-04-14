@@ -15,12 +15,12 @@ class findCalibROI
 public:
 	findCalibROI();
 	virtual ~findCalibROI();
-	int init(const std::string& imgFileName);
+	virtual int init(const std::string& imgFileName);
 	void destroyAll();
 	void saveROIImage();
 	void reset();
 	void nextImage();
-	const cv::Mat& findBlobs();
+	const cv::Mat& getBlobsImg();
 	const std::vector<cv::Point>& getCartCoord() const
 	{
 		return m_vCartCoord;
@@ -29,14 +29,17 @@ public:
 	{
 		return m_sImgFileName;
 	}
+protected:
+	unsigned int m_uiRows, m_uiCols;
 
 private:
 	static void onMouse( int event, int x, int y, int, void* p);
 
 private:
-	cv::Mat m_mInputImg, m_mScribbleImg, m_mOutputImg;	//images
+	cv::Mat m_mInputImg, m_mScribbleImg;	//color image for show
 	cv::Mat m_mScribbleMask;	//mask
 	cv::Mat m_mBlobImg;			//blobs
+	cv::Mat m_mInputGrayImg,  m_mROIImg; //8 bit gray images
 	int m_iscribbleRadius;
 
 	bool m_bRButtonDown;

@@ -119,12 +119,15 @@ int findCalibROI::init(const std::string& imgFileName)
 	m_vHullPointList.clear();
 	m_vCartCoord.clear();
 
-	m_mInputImg = cv::imread(m_sImgFileName, CV_LOAD_IMAGE_GRAYSCALE);
+	m_mInputImg = cv::imread(m_sImgFileName, CV_LOAD_IMAGE_COLOR);
 	if(!m_mInputImg.data )                              
 	{
 		std::cout <<  "Could not open or find the image: " << m_sImgFileName << std::endl ;
 		return -1;
 	}
+	m_uiRows = m_mInputImg.rows;
+	m_uiCols = m_mInputImg.cols;
+	cv::cvtColor(m_mInputImg, m_mInputGrayImg, CV_BGR2GRAY);//opencv default: BGR
 	m_mScribbleImg = m_mInputImg.clone();
 
 	m_mScribbleMask.create(2,m_mInputImg.size, CV_8UC1);
@@ -157,7 +160,8 @@ void findCalibROI::destroyAll()
 	m_mScribbleMask.release();
 	m_mInputImg.release();
 	m_mScribbleImg.release();
-	m_mOutputImg.release();
+	m_mROIImg.release();
+	m_mInputGrayImg.release();
 }
 
 void findCalibROI::saveROIImage()
@@ -168,8 +172,8 @@ void findCalibROI::saveROIImage()
 	int preIdx = m_sImgFileName.rfind('\\');
 	std::string saveName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_ROI.jpg" ;
 
-	m_mInputImg.copyTo(m_mOutputImg, m_mScribbleMask);
-	cv::imwrite(saveName, m_mOutputImg);
+	m_mInputGrayImg.copyTo(m_mROIImg, m_mScribbleMask);
+	cv::imwrite(saveName, m_mROIImg);
 
 	std::cout << "save succeessfully in " << saveName << "!" << std::endl;
 }
@@ -197,21 +201,24 @@ void findCalibROI::nextImage()
 	}
 }
 
-const cv::Mat& findCalibROI::findBlobs()
+const cv::Mat& findCalibROI::getBlobsImg()
 {
-	m_mBlobImg.create(2, m_mInputImg.size, m_mInputImg.type());
+	m_mBlobImg.create(2, m_mInputGrayImg.size, m_mInputGrayImg.type());
 	m_mBlobImg = 0;
 	
 	cv::Rect  bRect = cv::boundingRect(m_vHullPointList);//up-right bounding rectangle
-	cv::Mat roiImg(m_mOutputImg, bRect);
-	cv::Mat blobImg(bRect.size(), roiImg.type());
-	//cv::Mat roiMask;
-	//roiImg.create(2, m_mBlobImg.size, CV_8UC1);
-	//roiImg = 0;
-	cv::threshold(roiImg, blobImg, 255, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
+	cv::Mat roiRectImg(m_mROIImg, bRect);//point to the roi rect of the roi image
+	
+	cv::Mat blobImg(bRect.size(), roiRectImg.type());//create a matrix to save the threshold binary image
+	double th = cv::threshold(roiRectImg, blobImg, 255, 255, cv::THRESH_BINARY|cv::THRESH_OTSU);
+	std::cout << "the threshold value is:" << th << std::endl;
 	cv::Mat roiBImg(m_mBlobImg, bRect);
 	blobImg.copyTo(roiBImg);
-	cv::imwrite("binary.jpg", m_mBlobImg);
+
+	int postIdx = m_sImgFileName.rfind('.');
+	int preIdx = m_sImgFileName.rfind('\\');
+	std::string saveName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_Blobs.jpg" ;
+	cv::imwrite(saveName, m_mBlobImg);
 
 	return m_mBlobImg;
 }
