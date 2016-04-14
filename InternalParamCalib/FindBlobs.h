@@ -11,7 +11,8 @@
 
 namespace cv
 {
-	typedef std::vector<vector<Point> > contourContainer;
+	typedef std::vector<Point> contourType;
+	typedef std::vector<contourType> contourContainer;
 	typedef std::vector<Point> centroidContainer;
 	class findBlobs : public findCalibROI
 	{
@@ -20,7 +21,9 @@ namespace cv
 		virtual ~findBlobs();
 		virtual int init(const std::string& imgFileName);
 		const contourContainer& findBlobsContours(const Mat& blobImg);
-		const centroidContainer& findCentroids(const contourContainer& contours);
+		const centroidContainer& findCentroids(/*const contourContainer& contours*/);
+	private:
+		static bool greaterMark(const contourType& s1, const contourType& s2) { return s1.size() > s2.size() ;};
 	private:
 		contourContainer m_vContours;
 		centroidContainer m_vCentroids;

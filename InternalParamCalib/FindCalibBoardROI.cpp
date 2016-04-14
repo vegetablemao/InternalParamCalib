@@ -104,11 +104,16 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 	
 
 	cv::imshow("Scribble Image", self->m_mScribbleImg);
-	cv::imshow("Mask Image", self->m_mScribbleMask);
+	//cv::imshow("Mask Image", self->m_mScribbleMask);
 }
 
 int findCalibROI::init(const std::string& imgFileName)
 {
+	std::cout << "Please input the number of blobs in x-direction:";
+	std::cin >> m_iBlobsX;
+	std::cout << "Please input the number of blobs in y-direction:";
+	std::cin >> m_iBlobsY;
+
 	m_sImgFileName = imgFileName;
 	m_bRButtonDown = false;
 	m_bLButtonDown = false;
@@ -135,14 +140,15 @@ int findCalibROI::init(const std::string& imgFileName)
 
 	// Create a window for display.
 	cv::namedWindow( "Scribble Image", cv::WINDOW_AUTOSIZE);
-	cv::namedWindow( "Mask Image", cv::WINDOW_AUTOSIZE );
+	//cv::namedWindow( "Mask Image", cv::WINDOW_AUTOSIZE );
 
 	// Show our image inside it.
-	cv::imshow("Scribble Image", m_mScribbleImg);                       
-	cv::imshow("Mask Image", m_mScribbleMask);
+	cv::imshow("Scribble Image", m_mScribbleImg);
+	std::cout << "Click a polygon that encloses the calibration pattern. " << std::endl;
+	//cv::imshow("Mask Image", m_mScribbleMask);
 
-	cv::moveWindow("Scribble Image", 1,1);
-	cv::moveWindow("Mask Image", m_mInputImg.cols + 50, 1);
+	cv::moveWindow("Scribble Image", 300, 0);
+	//cv::moveWindow("Mask Image", m_mInputImg.cols + 50, 1);
 
 	// set the callback on mouse
 	cv::setMouseCallback("Scribble Image", onMouse, this);
@@ -154,7 +160,7 @@ void findCalibROI::destroyAll()
 {
 	// destroy all windows
 	cv::destroyWindow("Scribble Image");
-	cv::destroyWindow("Mask Image");
+	//cv::destroyWindow("Mask Image");
 
 	// clear all data
 	m_mScribbleMask.release();

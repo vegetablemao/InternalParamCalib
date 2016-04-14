@@ -1,5 +1,6 @@
 #include "FindBlobs.h"
 #include <iostream>
+#include <algorithm>
 
 namespace cv
 {
@@ -25,29 +26,30 @@ namespace cv
 			std::cout << "couldn't find any contours!" << std::endl;
 			return m_vContours;
 		}
+
 		m_mOutputImg = Mat::zeros(m_uiRows, m_uiCols, CV_8UC3);
+		int numOfBlobs = m_iBlobsX * m_iBlobsY;
+		std::sort(m_vContours.begin(), m_vContours.end(), greaterMark); //sort the contours from big to small, we only need the biggest numOfBlobs contours.
+		m_vContours.erase(m_vContours.begin()+numOfBlobs, m_vContours.end()); //erase the smallest contours
+
 		drawContours(m_mOutputImg, m_vContours, -1, CV_RGB(255,255,255));
 		imwrite("contours.jpg", m_mOutputImg);
 		return m_vContours;
 	}
-	const centroidContainer& findBlobs::findCentroids(const contourContainer& contours)
+	const centroidContainer& findBlobs::findCentroids(/*const contourContainer& contours*/)
 	{
 		m_vCentroids.clear();
 
 		/// Get the moments
 		std::vector<Moments> mu;
-		for( int i = 0; i < contours.size(); i++ )
+		for( int i = 0; i < m_vContours.size(); i++ )
 		{ 
-			mu.push_back(moments( contours[i], false ));
+			mu.push_back(moments( m_vContours[i], false ));
 		}
 
 		///  Get the mass centers:
 		for( int i = 0; i < mu.size(); i++ )
 		{ 
-			if (mu[i].m00 < 1e-8)
-			{
-				continue;
-			}
 			int cx = static_cast<int>( mu[i].m10/mu[i].m00 );
 			int cy = static_cast<int>( mu[i].m01/mu[i].m00 );
 			m_vCentroids.push_back(Point(cx, cy));
@@ -56,4 +58,5 @@ namespace cv
 		imwrite("centroids.jpg", m_mOutputImg);
 		return m_vCentroids;
 	}
+
 }

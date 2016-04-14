@@ -31,6 +31,7 @@ public:
 	}
 protected:
 	unsigned int m_uiRows, m_uiCols;
+	int m_iBlobsX, m_iBlobsY;
 
 private:
 	static void onMouse( int event, int x, int y, int, void* p);
