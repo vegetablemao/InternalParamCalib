@@ -35,15 +35,19 @@ namespace cv
 		m_vCentroids.clear();
 
 		/// Get the moments
-		std::vector<Moments> mu(contours.size() );
+		std::vector<Moments> mu;
 		for( int i = 0; i < contours.size(); i++ )
 		{ 
-			mu[i] = moments( contours[i], false );
+			mu.push_back(moments( contours[i], false ));
 		}
 
 		///  Get the mass centers:
-		for( int i = 0; i < contours.size(); i++ )
+		for( int i = 0; i < mu.size(); i++ )
 		{ 
+			if (mu[i].m00 < 1e-8)
+			{
+				continue;
+			}
 			int cx = static_cast<int>( mu[i].m10/mu[i].m00 );
 			int cy = static_cast<int>( mu[i].m01/mu[i].m00 );
 			m_vCentroids.push_back(Point(cx, cy));
