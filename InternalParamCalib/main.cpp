@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 				findROI.saveROIImage();
 				const cv::contourContainer &contours = fb.findBlobsContours(findROI.getBlobsImg());
 				fb.findCentroids();
+				fb.findCentroidGrid();
 				//test
 				const std::vector<cv::Point> &coord = findROI.getCartCoord();
 				if (coord.size() == 3)
