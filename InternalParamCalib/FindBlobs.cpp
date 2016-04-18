@@ -183,24 +183,16 @@ namespace cv
 
 		//find the left top three points in the centroids.
 		int mind = findNearestPointInMatrix(origin, mc);
-		std::cout << mc << std::endl;
 		Mat cco(2, 1, mc.type());
 		mc.col(mind).copyTo(cco);	//orgin point
-
-		std::cout << cco << std::endl;
 		DeleteOneColOfMat(mc, mind);
-		std::cout << mc << std::endl;
-		std::cout << cco << std::endl;
 		m_mCentroidGrid.at<Vec2d>(0, 0) = cco;
 
 
 		mind = findNearestPointInMatrix(x1, mc);
-		std::cout << mc << std::endl;
 		Mat ccx(2, 1, mc.type());
 		mc.col(mind).copyTo(ccx);
-		std::cout << ccx << std::endl;
 		DeleteOneColOfMat(mc, mind);
-		std::cout << mc << std::endl;
 		m_mCentroidGrid.at<Vec2d>(0, 1) = ccx;
 
 
@@ -224,11 +216,7 @@ namespace cv
 		for(size_t i = 0; i < 3; i++)
 		{
 			mc.col(idx[i]).copyTo(cxy.col(i));
-			//cxy.col(i) = mc.col(idx[i]);
 		}
-		std::cout << mc << std::endl;
-		std::cout << cxy << std::endl;
-
 
 		std::vector<Point> pairs;
 		pairs.clear();

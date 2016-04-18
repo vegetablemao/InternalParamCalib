@@ -5,16 +5,16 @@
 int main(int argc, char *argv[])
 {
 
-	std::string filename;
+	/*std::string filename;
 	std::cout << "input image filename:" << std::endl;
-	std::cin >> filename;
+	std::cin >> filename;*/
 
 
-	char * defaultImgFileName = "fisheye\\k11.jpg";
+	char * defaultImgFileName = "elead\\k11.jpg";
 	cv::findBlobs fb;
 	findCalibROI& findROI = fb;
 
-	if (findROI.init(filename) == -1)
+	if (findROI.init(defaultImgFileName) == -1)
 	{
 		std::cout <<  "Could not initialize" << std::endl ;
 		return -1;
