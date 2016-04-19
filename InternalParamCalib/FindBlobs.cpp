@@ -1,5 +1,7 @@
 #include "FindBlobs.h"
 #include <algorithm>
+#include <fstream>
+#include <math.h>
 
 namespace cv
 {
@@ -19,6 +21,8 @@ namespace cv
 	const contourContainer& findBlobs::findBlobsContours(const Mat& blobImg)
 	{
 		m_vContours.clear();
+		std::cout << blobImg.type() << std::endl;
+		std::cout << blobImg.elemSize() << " " << blobImg.elemSize1() << std::endl;
 		findContours(blobImg, m_vContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 		if (m_vContours.empty())
 		{
@@ -26,8 +30,8 @@ namespace cv
 			return m_vContours;
 		}
 
-		m_mOutputImg = Mat::zeros(m_uiRows, m_uiCols, CV_8UC3);
-		int numOfBlobs = m_iBlobsX * m_iBlobsY;
+		m_mOutputImg = Mat::zeros(blobImg.rows, blobImg.cols, CV_8UC3);
+		int numOfBlobs = /*m_iBlobsX * m_iBlobsY*/4*4;
 		std::sort(m_vContours.begin(), m_vContours.end(), greaterMark); //sort the contours from big to small, we only need the biggest numOfBlobs contours.
 		m_vContours.erase(m_vContours.begin()+numOfBlobs, m_vContours.end()); //erase the smallest contours
 
@@ -171,14 +175,53 @@ namespace cv
 		}
 	}
 
+	void findBlobs::readNumFromFile(const char* filename, vector<int>& nums)
+	{
+		nums.clear();
+		std::ifstream ifs (filename, std::ifstream::in);
+		char c = ifs.get();
+		std::string sc;
+		sc.clear();
+		sc.push_back(c);
+		while (ifs.good()) {
+			c = ifs.get();
+			sc.push_back(c);
+		}
+		std::cout << sc << std::endl;
+		ifs.close();
+
+
+		char* s = (char*)malloc(sc.size());
+		memset(s, 0, sc.size());
+		memcpy(s, sc.c_str(), sc.size());
+		s[sc.size()-1] = '\0';
+		const char *d = " [,;]\n";
+		char* p = strtok(s, d);
+		while (p)
+		{
+			nums.push_back(atoi(p));
+			p = strtok(NULL, d);
+		}
+	}
+
 	const Mat& findBlobs::findCentroidGrid()
 	{
-		m_mCentroidGrid.create(m_iBlobsX, m_iBlobsY, CV_64FC2);
+		m_mCentroidGrid.create(/*m_iBlobsX, m_iBlobsY,*/4,4, CV_64FC2);
 		m_mCentroidGrid = 0;
 		
-		Point origin = m_vCartCoord[0];
+		std::vector<Point> cartCoord;
+		cartCoord.clear();
+		std::vector<int> nums;
+		nums.clear();
+		readNumFromFile("cartCoord.txt", nums);
+
+		Point origin(nums[0], nums[1]);
+		Point x1(nums[2], nums[3]);
+		Point y1(nums[4], nums[5]);
+
+		/*Point origin = m_vCartCoord[0];
 		Point x1 = m_vCartCoord[1];
-		Point y1 = m_vCartCoord[2];
+		Point y1 = m_vCartCoord[2];*/
 		Mat mc = Mat(m_vCentroids).reshape(1).t();
 
 		//find the left top three points in the centroids.
@@ -203,36 +246,77 @@ namespace cv
 		m_mCentroidGrid.at<Vec2d>(1, 0) = ccy;
 
 		//find the first line of the centroids
-		std::vector<int> idx;
-		sortTheDistFromThePoint(x1, mc, idx);
-
-		const int tmpCountMax = 6;
-		int tmpidx[tmpCountMax] = {3, 4, 5, 6, 7, 8};
-		int tmpCount = 0;
-
-		Mat cxy;
-		cxy.create(2, 3, mc.type());
-		cxy = 0;
-		for(size_t i = 0; i < 3; i++)
-		{
-			mc.col(idx[i]).copyTo(cxy.col(i));
-		}
-
 		std::vector<Point> pairs;
 		pairs.clear();
 		pairs.push_back(Point(1, 2));
 		pairs.push_back(Point(0, 2));
 		pairs.push_back(Point(0, 1));
 
-		std::vector<double> cosa;
-		std::vector<double> cosb;
-		computeCos(ccx, cco, cxy, pairs, cosa, cosb);
+		for (int i = 1; i < 3; i++)
+		{
+			std::vector<int> idx;
+			sortTheDistFromThePoint(x1, mc, idx);
+
+			const int tmpCountMax = 6;
+			int tmpidx[tmpCountMax] = {3, 4, 5, 6, 7, 8};
+			int tmpCount = 0;
+
+			bool ok = false;
+
+			while (!ok)
+			{
+				Mat cxy;
+				cxy.create(2, 3, mc.type());
+				cxy = 0;
+				for(size_t i = 0; i < 3; i++)
+				{
+					mc.col(idx[i]).copyTo(cxy.col(i));
+				}
+
+				std::vector<double> cosa;
+				std::vector<double> cosb;
+				computeCos(ccx, cco, cxy, pairs, cosa, cosb);
+
+				std::vector<double>::iterator minIter = std::min_element(cosa.begin(), cosa.end());
+				int minind = std::distance(cosa.begin(), minIter);
+				Point pair;
+				std::vector<int> indxy;
+				if (3 == mind)
+				{
+					pair = pairs[mind];
+					indxy.push_back(idx[pair.x]);
+					indxy.push_back(idx[pair.y]);
+				}
+				else
+				{
+					pair = pairs[mind];
+					indxy.push_back(idx[pair.x]);
+					indxy.push_back(idx[tmpidx[tmpCount]]);
+				}
+				ok = true;
+
+				std::vector<double>::iterator maxIter = std::max_element(cosb.begin(), cosb.end());
+
+				if ( acos(*maxIter)*180/CV_PI > 25 )
+				{
+					if (tmpCount < tmpCountMax)
+					{
+						tmpCount += 1;
+						ok = false;
+					}
+					else
+						std::cout << "In blobsgrid: Can not find (0," << i+1 << ")" << std::endl;  
+				}
+			}
+		}
+		
+
+		
 
 
 
 
-
-		std::for_each (idx.begin(), idx.end(), printFunc);
+		//std::for_each (idx.begin(), idx.end(), printFunc);
 		std::cout << std::endl;
 		std::cout << mc.cols << std::endl;
 		std::cout << m_mCentroidGrid.at<Vec2d>(0, 0) << " " <<  m_mCentroidGrid.at<Vec2d>(0, 1) << " " <<  m_mCentroidGrid.at<Vec2d>(1, 0) << std::endl;

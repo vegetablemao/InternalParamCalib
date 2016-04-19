@@ -2,33 +2,26 @@
 #include "FindBlobs.h"
 #include <iostream>
 
-int main(int argc, char *argv[])
+
+void test1(std::string filename)
 {
-
-	/*std::string filename;
-	std::cout << "input image filename:" << std::endl;
-	std::cin >> filename;*/
-
-
-	char * defaultImgFileName = "elead\\k11.jpg";
 	cv::findBlobs fb;
 	findCalibROI& findROI = fb;
-
-	if (findROI.init(defaultImgFileName) == -1)
+	if (findROI.init(filename) == -1)
 	{
-		std::cout <<  "Could not initialize" << std::endl ;
-		return -1;
+		std::cout <<  "Could not initialize" << std::endl;
+		return;
 	}
 	// Wait for a keystroke in the window
 	for (;;)
 	{
-		char key = cv::waitKey(0);                          
+		char key = cv::waitKey(0);            
 		switch (key)
 		{
 		case 'q':
 			std::cout << "goodbye!!" << std::endl;
-			
-			return 0;
+
+			return;
 
 		case 's':
 			{
@@ -58,6 +51,33 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+}
+
+void test2(std::string filename)
+{
+	cv::findBlobs fb;
+	cv::Mat blobImg = cv::imread(filename);
+	cv::cvtColor(blobImg, blobImg, CV_RGB2GRAY);
+	const cv::contourContainer &contours = fb.findBlobsContours(blobImg);
+	fb.findCentroids();
+	fb.findCentroidGrid();
+	//blobImg.convertTo(blobImg, CV_16UC2);
+	//std::cout << blobImg.elemSize() << " " << blobImg.elemSize1() << std::endl;
+	//std::cout << blobImg.type() << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+
+	std::string filename;
+	std::cout << "input image filename:" << std::endl;
+	std::cin >> filename;
+
+
+	char * defaultImgFileName = "elead\\k11.jpg";
+	test2(filename);
+
+	
 
 
 	return 0;

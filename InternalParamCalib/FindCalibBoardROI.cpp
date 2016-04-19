@@ -1,5 +1,6 @@
 #include "FindCalibBoardROI.h"
 #include <iostream>
+#include <fstream>
 
 findCalibROI::findCalibROI()
 {
@@ -104,6 +105,10 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 	
 
 	cv::imshow("Scribble Image", self->m_mScribbleImg);
+	std::ofstream ofs("cartCoord.txt", std::ofstream::out);
+	ofs << self->m_vCartCoord;
+	ofs.close();
+
 	//cv::imshow("Mask Image", self->m_mScribbleMask);
 }
 
