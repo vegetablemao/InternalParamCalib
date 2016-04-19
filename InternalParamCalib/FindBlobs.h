@@ -32,7 +32,7 @@ namespace cv
 		static void readNumFromFile(const char* filename, vector<int>& nums);
 		void DeleteOneColOfMat(Mat& object,int col);
 		int findNearestPointInMatrix(const Point& ip, const Mat& mc);
-		void computeCos(const Mat& co, const Mat& cco, const Mat& cxy, const std::vector<Point>& pairs, std::vector<double>& cosa, std::vector<double>& cosb);
+		void computeCos(const Mat& co, const Mat& cco, const Mat& cxy, const Mat& vxy, const std::vector<Point>& pairs, std::vector<double>& cosa, std::vector<double>& cosb);
 		void sortTheDistFromThePoint(const Point& ip, const Mat& mc, std::vector<int>& idx);
 	private:
 		contourContainer m_vContours;

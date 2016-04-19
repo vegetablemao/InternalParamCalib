@@ -138,11 +138,11 @@ namespace cv
 
 	}
 
-	void findBlobs::computeCos(const Mat& co, const Mat& cco, const Mat& cxy, 
+	void findBlobs::computeCos(const Mat& co, const Mat& cco, const Mat& cxy, const Mat& vxy,
 		const std::vector<Point>& pairs,
 		std::vector<double>& cosa, std::vector<double>& cosb)
 	{
-		Mat vxy = cxy - co * Mat::ones(1, cxy.cols, co.type());
+		//Mat vxy = cxy - co * Mat::ones(1, cxy.cols, co.type());
 		Mat v =  co - cco;
 
 		
@@ -262,10 +262,12 @@ namespace cv
 			int tmpCount = 0;
 
 			bool ok = false;
-
+			Mat cxy;
+			Mat vxy;
+			Point pair;
 			while (!ok)
 			{
-				Mat cxy;
+				
 				cxy.create(2, 3, mc.type());
 				cxy = 0;
 				for(size_t i = 0; i < 3; i++)
@@ -275,21 +277,22 @@ namespace cv
 
 				std::vector<double> cosa;
 				std::vector<double> cosb;
-				computeCos(ccx, cco, cxy, pairs, cosa, cosb);
+				vxy = cxy - ccx * Mat::ones(1, cxy.cols, ccx.type());
+				computeCos(ccx, cco, cxy, vxy, pairs, cosa, cosb);
 
 				std::vector<double>::iterator minIter = std::min_element(cosa.begin(), cosa.end());
 				int minind = std::distance(cosa.begin(), minIter);
-				Point pair;
+				
 				std::vector<int> indxy;
-				if (3 == mind)
+				if (2 == minind)
 				{
-					pair = pairs[mind];
+					pair = pairs[minind];
 					indxy.push_back(idx[pair.x]);
 					indxy.push_back(idx[pair.y]);
 				}
 				else
 				{
-					pair = pairs[mind];
+					pair = pairs[minind];
 					indxy.push_back(idx[pair.x]);
 					indxy.push_back(idx[tmpidx[tmpCount]]);
 				}
@@ -308,6 +311,24 @@ namespace cv
 						std::cout << "In blobsgrid: Can not find (0," << i+1 << ")" << std::endl;  
 				}
 			}
+			Mat cxyo = cxy.clone();
+			cxyo.col(pair.x).copyTo(cxy.col(0));
+			cxyo.col(pair.y).copyTo(cxy.col(1));
+			cxy = cxy.t();
+			cxy.pop_back();
+			cxy = cxy.t();
+			std::cout << cxy << std::endl;
+
+			Mat vxyo = vxy.clone();
+			vxyo.col(pair.x).copyTo(vxy.col(0));
+			vxyo.col(pair.y).copyTo(vxy.col(1));
+			vxy = vxy.t();
+			vxy.pop_back();
+			vxy = vxy.t();
+			Mat ll = Mat::zeros(1, 2, cxy.type());
+			vxy.push_back(ll);
+			std::cout << vxy << std::endl;
+
 		}
 		
 
