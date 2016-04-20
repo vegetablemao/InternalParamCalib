@@ -56,8 +56,10 @@ void test1(std::string filename)
 void test2(std::string filename)
 {
 	cv::findBlobs fb;
-	cv::Mat blobImg = cv::imread(filename);
-	cv::cvtColor(blobImg, blobImg, CV_RGB2GRAY);
+	cv::FileStorage fs(filename, cv::FileStorage::READ);
+	cv::Mat blobImg;
+	fs["blobsMat"] >> blobImg;
+	//cv::cvtColor(blobImg, blobImg, CV_RGB2GRAY);
 	const cv::contourContainer &contours = fb.findBlobsContours(blobImg);
 	fb.findCentroids();
 	fb.findCentroidGrid();
@@ -69,13 +71,15 @@ void test2(std::string filename)
 int main(int argc, char *argv[])
 {
 
-	std::string filename;
+	/*std::string filename;
 	std::cout << "input image filename:" << std::endl;
-	std::cin >> filename;
+	std::cin >> filename;*/
 
 
-	char * defaultImgFileName = "elead\\k11.jpg";
-	test2(filename);
+	char * defaultBlobsFileName = "k11_Blobs.xml";
+	char * defaultInputFileName = "elead\\k11.jpg";
+	//test1(defaultInputFileName);
+	test2(defaultBlobsFileName);
 
 	
 

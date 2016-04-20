@@ -21,8 +21,6 @@ namespace cv
 	const contourContainer& findBlobs::findBlobsContours(const Mat& blobImg)
 	{
 		m_vContours.clear();
-		std::cout << blobImg.type() << std::endl;
-		std::cout << blobImg.elemSize() << " " << blobImg.elemSize1() << std::endl;
 		findContours(blobImg, m_vContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 		if (m_vContours.empty())
 		{
@@ -63,7 +61,17 @@ namespace cv
 				circle(m_mOutputImg, Point(cx, cy), 2, CV_RGB(255,0,0), -1 );
 			}
 		}
-		imwrite("centroids.jpg", m_mOutputImg);
+		
+		std::string filename = getFileName();
+		int postIdx = filename.rfind('.');
+		int preIdx = filename.rfind('\\');
+		std::string centImgName = filename.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.jpg";
+		std::string centXMLFileName = filename.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.xml";
+		imwrite(centImgName, m_mOutputImg);
+
+		cv::FileStorage fs(centXMLFileName, cv::FileStorage::WRITE);
+		fs << "centroidsMat" << m_vCentroids;
+		fs.release();
 		return m_vCentroids;
 	}
 
@@ -115,13 +123,13 @@ namespace cv
 
 	}
 
-	void findBlobs::sortTheDistFromThePoint(const Point& ip, const Mat& mc, vector<int>& idx)
+	void findBlobs::sortTheDistFromThePoint(const Mat& ip, const Mat& mc, vector<int>& idx)
 	{
 		idx.clear();
 		int numOfCol = mc.cols;
-		Mat mip = Mat(ip);
-		mip.convertTo(mip, CV_64FC1);
-		Mat ipMat = mip * Mat::ones(1,numOfCol, mip.type());
+		//Mat mip = Mat(ip);
+		//mip.convertTo(mip, CV_64FC1);
+		Mat ipMat = ip * Mat::ones(1,numOfCol, ip.type());
 		subtract(ipMat, mc, ipMat);
 		pow(ipMat, 2, ipMat);
 
@@ -138,19 +146,10 @@ namespace cv
 
 	}
 
-	void findBlobs::computeCos(const Mat& co, const Mat& cco, const Mat& cxy, const Mat& vxy,
+	void findBlobs::computeCos(const Mat& co, const Mat& v, const Mat& cco, const Mat& cxy, const Mat& vxy,
 		const std::vector<Point>& pairs,
 		std::vector<double>& cosa, std::vector<double>& cosb)
 	{
-		//Mat vxy = cxy - co * Mat::ones(1, cxy.cols, co.type());
-		Mat v =  co - cco;
-
-		
-		std::cout << vxy << std::endl;
-		std::cout << v << std::endl;
-		std::cout << co << std::endl;
-		std::cout << cco << std::endl;
-		std::cout << cxy << std::endl;
 
 		vector<double> vxyabs;
 		vxyabs.clear();
@@ -175,7 +174,7 @@ namespace cv
 		}
 	}
 
-	void findBlobs::readNumFromFile(const char* filename, vector<int>& nums)
+	/*void findBlobs::readNumFromFile(const char* filename, vector<int>& nums)
 	{
 		nums.clear();
 		std::ifstream ifs (filename, std::ifstream::in);
@@ -202,7 +201,7 @@ namespace cv
 			nums.push_back(atoi(p));
 			p = strtok(NULL, d);
 		}
-	}
+	}*/
 
 	const Mat& findBlobs::findCentroidGrid()
 	{
@@ -211,17 +210,13 @@ namespace cv
 		
 		std::vector<Point> cartCoord;
 		cartCoord.clear();
-		std::vector<int> nums;
-		nums.clear();
-		readNumFromFile("cartCoord.txt", nums);
 
-		Point origin(nums[0], nums[1]);
-		Point x1(nums[2], nums[3]);
-		Point y1(nums[4], nums[5]);
+		cv::FileStorage fs("k11_cartCoord.xml", cv::FileStorage::READ);
+		fs["cartMat"] >> cartCoord;
 
-		/*Point origin = m_vCartCoord[0];
-		Point x1 = m_vCartCoord[1];
-		Point y1 = m_vCartCoord[2];*/
+		Point origin = cartCoord[0];
+		Point x1 = cartCoord[1];
+		Point y1 = cartCoord[2];
 		Mat mc = Mat(m_vCentroids).reshape(1).t();
 
 		//find the left top three points in the centroids.
@@ -231,13 +226,11 @@ namespace cv
 		DeleteOneColOfMat(mc, mind);
 		m_mCentroidGrid.at<Vec2d>(0, 0) = cco;
 
-
 		mind = findNearestPointInMatrix(x1, mc);
 		Mat ccx(2, 1, mc.type());
 		mc.col(mind).copyTo(ccx);
 		DeleteOneColOfMat(mc, mind);
 		m_mCentroidGrid.at<Vec2d>(0, 1) = ccx;
-
 
 		mind = findNearestPointInMatrix(y1, mc);
 		Mat ccy(2, 1, mc.type());
@@ -245,54 +238,63 @@ namespace cv
 		DeleteOneColOfMat(mc, mind);
 		m_mCentroidGrid.at<Vec2d>(1, 0) = ccy;
 
-		//find the first line of the centroids
+		
 		std::vector<Point> pairs;
 		pairs.clear();
 		pairs.push_back(Point(1, 2));
 		pairs.push_back(Point(0, 2));
 		pairs.push_back(Point(0, 1));
+		Mat co = ccx;
+		Mat v =  co - cco;
+		int j = 0;
 
+
+		//find the first line of the centroids
 		for (int i = 1; i < 3; i++)
 		{
 			std::vector<int> idx;
-			sortTheDistFromThePoint(x1, mc, idx);
+			sortTheDistFromThePoint(co, mc, idx);
 
-			const int tmpCountMax = 6;
-			int tmpidx[tmpCountMax] = {3, 4, 5, 6, 7, 8};
+			const int len = 6;
+			int tmpidx[len] = {2, 3, 4, 5, 6, 7};
 			int tmpCount = 0;
+			int tmpCountmax = len - 1;
 
 			bool ok = false;
 			Mat cxy;
 			Mat vxy;
+			std::vector<int> indxy;
+			std::vector<double> cosa;
+			std::vector<double> cosb;
 			Point pair;
+			int mincosind;
 			while (!ok)
-			{
-				
+			{			
 				cxy.create(2, 3, mc.type());
 				cxy = 0;
-				for(size_t i = 0; i < 3; i++)
+				for(size_t i = 0; i < 2; i++)
 				{
 					mc.col(idx[i]).copyTo(cxy.col(i));
 				}
-
-				std::vector<double> cosa;
-				std::vector<double> cosb;
-				vxy = cxy - ccx * Mat::ones(1, cxy.cols, ccx.type());
-				computeCos(ccx, cco, cxy, vxy, pairs, cosa, cosb);
+				mc.col(idx[tmpidx[tmpCount]]).copyTo(cxy.col(2));
+				vxy = cxy - co * Mat::ones(1, cxy.cols, co.type());
+				
+				computeCos(co, v, cco, cxy, vxy, pairs, cosa, cosb);
 
 				std::vector<double>::iterator minIter = std::min_element(cosa.begin(), cosa.end());
-				int minind = std::distance(cosa.begin(), minIter);
+				mincosind = std::distance(cosa.begin(), minIter);
 				
-				std::vector<int> indxy;
-				if (2 == minind)
+				
+				indxy.clear();
+				if (2 == mincosind)
 				{
-					pair = pairs[minind];
+					pair = pairs[mincosind];
 					indxy.push_back(idx[pair.x]);
 					indxy.push_back(idx[pair.y]);
 				}
 				else
 				{
-					pair = pairs[minind];
+					pair = pairs[mincosind];
 					indxy.push_back(idx[pair.x]);
 					indxy.push_back(idx[tmpidx[tmpCount]]);
 				}
@@ -302,7 +304,7 @@ namespace cv
 
 				if ( acos(*maxIter)*180/CV_PI > 25 )
 				{
-					if (tmpCount < tmpCountMax)
+					if (tmpCount < len)
 					{
 						tmpCount += 1;
 						ok = false;
@@ -317,7 +319,6 @@ namespace cv
 			cxy = cxy.t();
 			cxy.pop_back();
 			cxy = cxy.t();
-			std::cout << cxy << std::endl;
 
 			Mat vxyo = vxy.clone();
 			vxyo.col(pair.x).copyTo(vxy.col(0));
@@ -327,20 +328,162 @@ namespace cv
 			vxy = vxy.t();
 			Mat ll = Mat::zeros(1, 2, cxy.type());
 			vxy.push_back(ll);
-			std::cout << vxy << std::endl;
 
+			Mat vtmp = vxy.col(0).cross(vxy.col(1));
+			int trueminind = pair.x;
+			if (vtmp.at<double>(2,0) < 0)
+			{
+				flip(vxy, vxy, 1);
+				flip(cxy, cxy, 1);
+				flip(indxy, indxy, 1);
+				trueminind = pair.y;
+			}
+
+			std::vector<double>::iterator maxIter = std::max_element(cosa.begin(), cosa.end());
+			int maxind = std::distance(cosa.begin(), maxIter);
+			if ( (*maxIter > cos(5.0/180.0*CV_PI)) && (maxind!=trueminind ))
+			{
+				Mat m1 = cxy.col(0) - cxyo.col(mincosind);
+				Mat m2 = m1.t() * v;
+				if (m2.at<double>(0,0) > 0)
+				{
+					cxyo.col(mincosind).copyTo(cxy.col(0));
+					if (2 == mincosind)
+					{
+						indxy[0] = idx[tmpidx[tmpCount]];
+					}
+					else
+					{
+						indxy[0] = idx[mincosind];
+					}
+				}
+			}
+			m_mCentroidGrid.at<Vec2d>(j, i+1) = cxy.col(0);
+			v = cxy.col(0) - co;
+			co = cxy.col(0);
+			DeleteOneColOfMat(mc, indxy[0]);
+		}
+
+		//find the first col of the centroids
+		int i = 0;
+		co = ccy;
+		v = co - cco;
+		for (int j = 1; j < 3; j++)
+		{
+			std::vector<int> idx;
+			sortTheDistFromThePoint(co, mc, idx);
+
+			const int len = 6;
+			int tmpidx[len] = {2, 3, 4, 5, 6, 7};
+			int tmpCount = 0;
+			int tmpCountmax = len - 1;
+
+			bool ok = false;
+			Mat cxy;
+			Mat vxy;
+			std::vector<int> indxy;
+			std::vector<double> cosa;
+			std::vector<double> cosb;
+			Point pair;
+			int mincosind;
+			while (!ok)
+			{			
+				cxy.create(2, 3, mc.type());
+				cxy = 0;
+				for(size_t i = 0; i < 2; i++)
+				{
+					mc.col(idx[i]).copyTo(cxy.col(i));
+				}
+				mc.col(idx[tmpidx[tmpCount]]).copyTo(cxy.col(2));
+				vxy = cxy - co * Mat::ones(1, cxy.cols, co.type());
+
+				computeCos(co, v, cco, cxy, vxy, pairs, cosa, cosb);
+
+				std::vector<double>::iterator minIter = std::min_element(cosa.begin(), cosa.end());
+				mincosind = std::distance(cosa.begin(), minIter);
+
+
+				indxy.clear();
+				if (2 == mincosind)
+				{
+					pair = pairs[mincosind];
+					indxy.push_back(idx[pair.x]);
+					indxy.push_back(idx[pair.y]);
+				}
+				else
+				{
+					pair = pairs[mincosind];
+					indxy.push_back(idx[pair.x]);
+					indxy.push_back(idx[tmpidx[tmpCount]]);
+				}
+				ok = true;
+
+				std::vector<double>::iterator maxIter = std::max_element(cosb.begin(), cosb.end());
+
+				if ( *maxIter < cos(30.0/180.0*CV_PI) )
+				{
+					if (tmpCount < len)
+					{
+						tmpCount += 1;
+						ok = false;
+					}
+					else
+						std::cout << "In blobsgrid: Can not find (" << j+1 << ",0)" << std::endl;  
+				}
+			}
+			Mat cxyo = cxy.clone();
+			cxyo.col(pair.x).copyTo(cxy.col(0));
+			cxyo.col(pair.y).copyTo(cxy.col(1));
+			cxy = cxy.t();
+			cxy.pop_back();
+			cxy = cxy.t();
+
+			Mat vxyo = vxy.clone();
+			vxyo.col(pair.x).copyTo(vxy.col(0));
+			vxyo.col(pair.y).copyTo(vxy.col(1));
+			vxy = vxy.t();
+			vxy.pop_back();
+			vxy = vxy.t();
+			Mat ll = Mat::zeros(1, 2, cxy.type());
+			vxy.push_back(ll);
+
+			Mat vtmp = vxy.col(0).cross(vxy.col(1));
+			int trueminind = pair.x;
+			if (vtmp.at<double>(2,0) > 0)
+			{
+				flip(vxy, vxy, 1);
+				flip(cxy, cxy, 1);
+				flip(indxy, indxy, 1);
+				trueminind = pair.y;
+			}
+
+			std::vector<double>::iterator maxIter = std::max_element(cosa.begin(), cosa.end());
+			int maxind = std::distance(cosa.begin(), maxIter);
+			if ( (*maxIter > cos(5.0/180.0*CV_PI)) && (maxind!=trueminind ))
+			{
+				Mat m1 = cxy.col(0) - cxyo.col(mincosind);
+				Mat m2 = m1.t() * v;
+				if (m2.at<double>(0,0) > 0)
+				{
+					cxyo.col(mincosind).copyTo(cxy.col(0));
+					if (2 == mincosind)
+					{
+						indxy[0] = idx[tmpidx[tmpCount]];
+					}
+					else
+					{
+						indxy[0] = idx[mincosind];
+					}
+				}
+			}
+			m_mCentroidGrid.at<Vec2d>(j+1, i) = cxy.col(0);
+			v = cxy.col(0) - co;
+			co = cxy.col(0);
+			DeleteOneColOfMat(mc, indxy[0]);
 		}
 		
 
-		
 
-
-
-
-		//std::for_each (idx.begin(), idx.end(), printFunc);
-		std::cout << std::endl;
-		std::cout << mc.cols << std::endl;
-		std::cout << m_mCentroidGrid.at<Vec2d>(0, 0) << " " <<  m_mCentroidGrid.at<Vec2d>(0, 1) << " " <<  m_mCentroidGrid.at<Vec2d>(1, 0) << std::endl;
 		return m_mCentroidGrid;
 	}
 

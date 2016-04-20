@@ -182,10 +182,14 @@ void findCalibROI::saveROIImage()
 	int postIdx = m_sImgFileName.rfind('.');
 	int preIdx = m_sImgFileName.rfind('\\');
 	std::string saveName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_ROI.jpg" ;
-
 	m_mInputGrayImg.copyTo(m_mROIImg, m_mScribbleMask);
 	cv::imwrite(saveName, m_mROIImg);
 
+	std::string cartFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_cartCoord.xml" ;
+	cv::FileStorage fs(cartFileName, cv::FileStorage::WRITE);
+	fs << "cartMat" << m_vCartCoord;
+	fs.release();
+	
 	std::cout << "save succeessfully in " << saveName << "!" << std::endl;
 }
 
@@ -230,6 +234,12 @@ const cv::Mat& findCalibROI::getBlobsImg()
 	int preIdx = m_sImgFileName.rfind('\\');
 	std::string saveName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_Blobs.jpg" ;
 	cv::imwrite(saveName, m_mBlobImg);
+
+	std::string xmlFilename = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_Blobs.xml" ;
+	cv::FileStorage fs(xmlFilename, cv::FileStorage::WRITE);
+	fs << "blobsMat" << m_mBlobImg;
+	fs.release();
+
 
 	return m_mBlobImg;
 }
