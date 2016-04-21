@@ -29,7 +29,6 @@ namespace cv
 	private:
 		static bool greaterMark(const contourType& s1, const contourType& s2) { return s1.size() > s2.size() ;}
 		static void printFunc(int i) { std::cout << ' ' << i; }
-		//static void readNumFromFile(const char* filename, vector<int>& nums);
 		void DeleteOneColOfMat(Mat& object,int col);
 		int findNearestPointInMatrix(const Point& ip, const Mat& mc);
 		void computeCos(const Mat& co, const Mat& v, const Mat& cco, const Mat& cxy, const Mat& vxy, const std::vector<Point>& pairs, std::vector<double>& cosa, std::vector<double>& cosb);

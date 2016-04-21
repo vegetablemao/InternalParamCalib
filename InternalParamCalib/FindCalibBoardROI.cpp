@@ -1,6 +1,8 @@
 #include "FindCalibBoardROI.h"
 #include <iostream>
 #include <fstream>
+#include <direct.h>
+#include <io.h>
 
 findCalibROI::findCalibROI()
 {
@@ -112,14 +114,18 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 	//cv::imshow("Mask Image", self->m_mScribbleMask);
 }
 
-int findCalibROI::init(const std::string& imgFileName)
+int findCalibROI::init(const std::string& pathName)
 {
 	std::cout << "Please input the number of blobs in x-direction:";
 	std::cin >> m_iBlobsX;
 	std::cout << "Please input the number of blobs in y-direction:";
 	std::cin >> m_iBlobsY;
 
-	m_sImgFileName = imgFileName;
+	m_sPathName = pathName;
+	int postIdx = pathName.rfind('.');
+	int preIdx = pathName.rfind('\\');
+	m_sImgFileName = pathName.substr(preIdx+1, postIdx-preIdx-1);
+
 	m_bRButtonDown = false;
 	m_bLButtonDown = false;
 	m_iscribbleRadius = 2;
@@ -129,10 +135,10 @@ int findCalibROI::init(const std::string& imgFileName)
 	m_vHullPointList.clear();
 	m_vCartCoord.clear();
 
-	m_mInputImg = cv::imread(m_sImgFileName, CV_LOAD_IMAGE_COLOR);
+	m_mInputImg = cv::imread(pathName, CV_LOAD_IMAGE_COLOR);
 	if(!m_mInputImg.data )                              
 	{
-		std::cout <<  "Could not open or find the image: " << m_sImgFileName << std::endl ;
+		std::cout <<  "Could not open or find the image: " << pathName << std::endl ;
 		return -1;
 	}
 	m_uiRows = m_mInputImg.rows;
@@ -179,13 +185,11 @@ void findCalibROI::saveROIImage()
 {
 	std::cout << "saving ROI image from file "  << m_sImgFileName << " ..." << std::endl;
 
-	int postIdx = m_sImgFileName.rfind('.');
-	int preIdx = m_sImgFileName.rfind('\\');
-	std::string saveName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_ROI.jpg" ;
+	std::string saveName = m_sImgFileName + "_ROI.jpg" ;
 	m_mInputGrayImg.copyTo(m_mROIImg, m_mScribbleMask);
 	cv::imwrite(saveName, m_mROIImg);
 
-	std::string cartFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_cartCoord.xml" ;
+	std::string cartFileName = m_sImgFileName + "_cartCoord.xml" ;
 	cv::FileStorage fs(cartFileName, cv::FileStorage::WRITE);
 	fs << "cartMat" << m_vCartCoord;
 	fs.release();
@@ -197,7 +201,7 @@ void findCalibROI::reset()
 {
 	std::cout << "resetting..." << std::endl;
 	destroyAll();
-	if (init(m_sImgFileName) == -1)
+	if (init(m_sPathName) == -1)
 	{
 		std::cout <<  "could not initialize" << std::endl ;
 	}
@@ -206,11 +210,11 @@ void findCalibROI::reset()
 void findCalibROI::nextImage()
 {
 	std::cout << "please input the name of next image:" << std::endl;
-	std::string fileName;
-	std::cin >> fileName;
-	m_sImgFileName = fileName;
+	std::string pathName;
+	std::cin >> pathName;
+	m_sPathName = pathName;
 	destroyAll();
-	if (init(m_sImgFileName) == -1)
+	if (init(m_sPathName) == -1)
 	{
 		std::cout <<  "could not initialize" << std::endl ;
 	}
@@ -230,12 +234,39 @@ const cv::Mat& findCalibROI::getBlobsImg()
 	cv::Mat roiBImg(m_mBlobImg, bRect);
 	blobImg.copyTo(roiBImg);
 
-	int postIdx = m_sImgFileName.rfind('.');
-	int preIdx = m_sImgFileName.rfind('\\');
-	std::string saveName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_Blobs.jpg" ;
+
+
+	std::string directory = std::string(SAVE_PATH);
+	std::string subDir = directory + "\\" + m_sImgFileName;
+	int ret = _access(directory.c_str(), 0);
+	if (-1 == ret)
+	{
+		if (_mkdir(directory.c_str()) == 0)
+		{
+			std::cout << "directory" << directory << "has been created successfully!" << std::endl;
+		}
+		else
+		{
+			std::cout << "Problem creating directory" << directory << std::endl;
+		}
+	}
+
+	ret = _access(subDir.c_str(), 0);
+	if (_mkdir(subDir.c_str()) == 0)
+	{
+		std::cout << "subDir" << subDir << "has been created successfully!" << std::endl;
+	}
+	else
+	{
+		std::cout << "Problem creating subDir" << subDir << std::endl;
+	}
+
+
+	
+	std::string saveName = subDir + "\\" + m_sImgFileName + "_Blobs.jpg" ;
 	cv::imwrite(saveName, m_mBlobImg);
 
-	std::string xmlFilename = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_Blobs.xml" ;
+	std::string xmlFilename = subDir + "\\" + m_sImgFileName + "_Blobs.xml" ;
 	cv::FileStorage fs(xmlFilename, cv::FileStorage::WRITE);
 	fs << "fileName" << m_sImgFileName;
 	fs << "blobX" << m_iBlobsX;

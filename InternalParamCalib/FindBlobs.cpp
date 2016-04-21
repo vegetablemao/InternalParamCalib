@@ -211,35 +211,6 @@ namespace cv
 		}
 	}
 
-	/*void findBlobs::readNumFromFile(const char* filename, vector<int>& nums)
-	{
-		nums.clear();
-		std::ifstream ifs (filename, std::ifstream::in);
-		char c = ifs.get();
-		std::string sc;
-		sc.clear();
-		sc.push_back(c);
-		while (ifs.good()) {
-			c = ifs.get();
-			sc.push_back(c);
-		}
-		std::cout << sc << std::endl;
-		ifs.close();
-
-
-		char* s = (char*)malloc(sc.size());
-		memset(s, 0, sc.size());
-		memcpy(s, sc.c_str(), sc.size());
-		s[sc.size()-1] = '\0';
-		const char *d = " [,;]\n";
-		char* p = strtok(s, d);
-		while (p)
-		{
-			nums.push_back(atoi(p));
-			p = strtok(NULL, d);
-		}
-	}*/
-
 	const Mat& findBlobs::findCentroidGrid()
 	{
 		m_mCentroidGrid.create(m_iBlobsX, m_iBlobsY, CV_64FC2);
@@ -597,7 +568,11 @@ namespace cv
 				}
 			}
 		}
+		std::string centGridXMLFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_centroidsGrid.xml";
 
+		cv::FileStorage fs1(centGridXMLFileName, cv::FileStorage::WRITE);
+		fs1 << "centroidsGridM" << m_mCentroidGrid;
+		fs1.release();
 
 		return m_mCentroidGrid;
 	}

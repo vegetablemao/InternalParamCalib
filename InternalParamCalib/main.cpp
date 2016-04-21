@@ -78,8 +78,8 @@ int main(int argc, char *argv[])
 
 	char * defaultBlobsFileName = "k11_Blobs.xml";
 	char * defaultInputFileName = "elead\\k11.jpg";
-	//test1(defaultInputFileName);
-	test2(defaultBlobsFileName);
+	test1(defaultInputFileName);
+	//test2(defaultBlobsFileName);
 
 	
 

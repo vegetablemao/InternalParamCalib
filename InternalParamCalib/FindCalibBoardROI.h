@@ -7,6 +7,8 @@
 #include <opencv2/highgui/highgui.hpp>  // OpenCV window I/O
 #include <opencv2/imgproc/imgproc.hpp> 
 
+#define SAVE_PATH ".\\elead_store"
+
 /************************************************************************/
 /* this class is used to choose the ROI of the input image with mouse.  */
 /************************************************************************/
@@ -15,7 +17,7 @@ class findCalibROI
 public:
 	findCalibROI();
 	virtual ~findCalibROI();
-	virtual int init(const std::string& imgFileName);
+	virtual int init(const std::string& pathName);
 	void destroyAll();
 	void saveROIImage();
 	void reset();
@@ -53,6 +55,8 @@ private:
 
 	std::vector<cv::Point> m_vPointList;
 	std::vector<cv::Point> m_vHullPointList;
+
+	std::string m_sPathName;
 	
 	int m_iCartCoordCnt;
 };
