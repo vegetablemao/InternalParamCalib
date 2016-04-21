@@ -33,6 +33,7 @@ protected:
 	unsigned int m_uiRows, m_uiCols;
 	int m_iBlobsX, m_iBlobsY;
 	std::vector<cv::Point> m_vCartCoord;//record the orgin,x,y point coordinate
+	std::string m_sImgFileName;
 
 private:
 	static void onMouse( int event, int x, int y, int, void* p);
@@ -54,8 +55,6 @@ private:
 	std::vector<cv::Point> m_vHullPointList;
 	
 	int m_iCartCoordCnt;
-
-	std::string m_sImgFileName;
 };
 
 #endif

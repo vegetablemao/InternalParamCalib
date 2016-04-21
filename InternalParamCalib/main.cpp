@@ -5,8 +5,8 @@
 
 void test1(std::string filename)
 {
-	cv::findBlobs fb;
-	findCalibROI& findROI = fb;
+	//cv::findBlobs fb;
+	findCalibROI findROI;
 	if (findROI.init(filename) == -1)
 	{
 		std::cout <<  "Could not initialize" << std::endl;
@@ -26,9 +26,9 @@ void test1(std::string filename)
 		case 's':
 			{
 				findROI.saveROIImage();
-				const cv::contourContainer &contours = fb.findBlobsContours(findROI.getBlobsImg());
-				fb.findCentroids();
-				fb.findCentroidGrid();
+				findROI.getBlobsImg();
+				//fb.findCentroids();
+				//fb.findCentroidGrid();
 				//test
 				const std::vector<cv::Point> &coord = findROI.getCartCoord();
 				if (coord.size() == 3)
@@ -57,10 +57,10 @@ void test2(std::string filename)
 {
 	cv::findBlobs fb;
 	cv::FileStorage fs(filename, cv::FileStorage::READ);
-	cv::Mat blobImg;
-	fs["blobsMat"] >> blobImg;
+	//cv::Mat blobImg;
+	//fs["blobsMat"] >> blobImg;
 	//cv::cvtColor(blobImg, blobImg, CV_RGB2GRAY);
-	const cv::contourContainer &contours = fb.findBlobsContours(blobImg);
+	const cv::contourContainer &contours = fb.findBlobsContours(fs);
 	fb.findCentroids();
 	fb.findCentroidGrid();
 	//blobImg.convertTo(blobImg, CV_16UC2);

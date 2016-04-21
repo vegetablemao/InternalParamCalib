@@ -237,6 +237,9 @@ const cv::Mat& findCalibROI::getBlobsImg()
 
 	std::string xmlFilename = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_Blobs.xml" ;
 	cv::FileStorage fs(xmlFilename, cv::FileStorage::WRITE);
+	fs << "fileName" << m_sImgFileName;
+	fs << "blobX" << m_iBlobsX;
+	fs << "blobY" << m_iBlobsY;
 	fs << "blobsMat" << m_mBlobImg;
 	fs.release();
 

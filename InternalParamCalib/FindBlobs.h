@@ -22,7 +22,7 @@ namespace cv
 		findBlobs();
 		virtual ~findBlobs();
 		virtual int init(const std::string& imgFileName);
-		const contourContainer& findBlobsContours(const Mat& blobImg);
+		const contourContainer& findBlobsContours(const FileStorage& blobImgFile);
 		const centroidContainer& findCentroids(/*const contourContainer& contours*/);
 		const Mat& findCentroidGrid();
 		
@@ -34,9 +34,11 @@ namespace cv
 		int findNearestPointInMatrix(const Point& ip, const Mat& mc);
 		void computeCos(const Mat& co, const Mat& v, const Mat& cco, const Mat& cxy, const Mat& vxy, const std::vector<Point>& pairs, std::vector<double>& cosa, std::vector<double>& cosb);
 		void sortTheDistFromThePoint(const Mat& ip, const Mat& mc, std::vector<int>& idx);
+		void sortTheDistFromThreePoint(const Mat& ip, const Mat& mc, std::vector<int>& idx);
 	private:
 		contourContainer m_vContours;
 		centroidContainer m_vCentroids;
+		
 		Mat m_mCentroidGrid;
 		Mat m_mOutputImg;
 	};

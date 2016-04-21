@@ -18,23 +18,30 @@ namespace cv
 		return findCalibROI::init(imgFileName);
 
 	}
-	const contourContainer& findBlobs::findBlobsContours(const Mat& blobImg)
+	const contourContainer& findBlobs::findBlobsContours(const FileStorage& blobImgFile)
 	{
 		m_vContours.clear();
+		Mat blobImg;
+		blobImgFile["blobsMat"] >> blobImg;
 		findContours(blobImg, m_vContours, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
 		if (m_vContours.empty())
 		{
 			std::cout << "couldn't find any contours!" << std::endl;
 			return m_vContours;
 		}
-
+		blobImgFile["fileName"] >> m_sImgFileName;
+		blobImgFile["blobX"] >> m_iBlobsX;
+		blobImgFile["blobY"] >> m_iBlobsY;
 		m_mOutputImg = Mat::zeros(blobImg.rows, blobImg.cols, CV_8UC3);
-		int numOfBlobs = /*m_iBlobsX * m_iBlobsY*/4*4;
+		int numOfBlobs = m_iBlobsX * m_iBlobsY;
 		std::sort(m_vContours.begin(), m_vContours.end(), greaterMark); //sort the contours from big to small, we only need the biggest numOfBlobs contours.
 		m_vContours.erase(m_vContours.begin()+numOfBlobs, m_vContours.end()); //erase the smallest contours
 
 		drawContours(m_mOutputImg, m_vContours, -1, CV_RGB(255,255,255));
-		imwrite("contours.jpg", m_mOutputImg);
+		int postIdx = m_sImgFileName.rfind('.');
+		int preIdx = m_sImgFileName.rfind('\\');
+		std::string contourFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_contours.jpg";
+		imwrite(contourFileName, m_mOutputImg);
 		return m_vContours;
 	}
 	const centroidContainer& findBlobs::findCentroids(/*const contourContainer& contours*/)
@@ -62,11 +69,10 @@ namespace cv
 			}
 		}
 		
-		std::string filename = getFileName();
-		int postIdx = filename.rfind('.');
-		int preIdx = filename.rfind('\\');
-		std::string centImgName = filename.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.jpg";
-		std::string centXMLFileName = filename.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.xml";
+		int postIdx = m_sImgFileName.rfind('.');
+		int preIdx = m_sImgFileName.rfind('\\');
+		std::string centImgName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.jpg";
+		std::string centXMLFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.xml";
 		imwrite(centImgName, m_mOutputImg);
 
 		cv::FileStorage fs(centXMLFileName, cv::FileStorage::WRITE);
@@ -127,8 +133,7 @@ namespace cv
 	{
 		idx.clear();
 		int numOfCol = mc.cols;
-		//Mat mip = Mat(ip);
-		//mip.convertTo(mip, CV_64FC1);
+
 		Mat ipMat = ip * Mat::ones(1,numOfCol, ip.type());
 		subtract(ipMat, mc, ipMat);
 		pow(ipMat, 2, ipMat);
@@ -144,6 +149,38 @@ namespace cv
 		sort(idx.begin(), idx.end(),
 			[& dist](size_t i1, size_t i2) {return dist[i1] <  dist[i2];});
 
+	}
+
+	void findBlobs::sortTheDistFromThreePoint(const Mat& ip, const Mat& mc, vector<int>& idx)
+	{
+		idx.clear();
+		int numOfCol = mc.cols;
+
+		Mat ip1 = ip.col(0);
+		Mat ip1Mat = ip1 * Mat::ones(1,numOfCol, ip.type());
+		subtract(ip1Mat, mc, ip1Mat);
+		pow(ip1Mat, 2, ip1Mat);
+
+		Mat ip2 = ip.col(1);
+		Mat ip2Mat = ip2 * Mat::ones(1,numOfCol, ip.type());
+		subtract(ip2Mat, mc, ip2Mat);
+		pow(ip2Mat, 2, ip2Mat);
+
+		Mat ip3 = ip.col(2);
+		Mat ip3Mat = ip3 * Mat::ones(1,numOfCol, ip.type());
+		subtract(ip3Mat, mc, ip3Mat);
+		pow(ip3Mat, 2, ip3Mat);
+
+		std::vector<double> dist;
+		dist.clear();
+		for (int i = 0; i < numOfCol; i++)
+		{
+			Scalar s = sum(ip1Mat.col(i)) + sum(ip2Mat.col(i)) + sum(ip3Mat.col(i));
+			dist.push_back(s[0]);
+			idx.push_back(i);
+		}
+		sort(idx.begin(), idx.end(),
+			[& dist](size_t i1, size_t i2) {return dist[i1] <  dist[i2];});
 	}
 
 	void findBlobs::computeCos(const Mat& co, const Mat& v, const Mat& cco, const Mat& cxy, const Mat& vxy,
@@ -205,13 +242,16 @@ namespace cv
 
 	const Mat& findBlobs::findCentroidGrid()
 	{
-		m_mCentroidGrid.create(/*m_iBlobsX, m_iBlobsY,*/4,4, CV_64FC2);
+		m_mCentroidGrid.create(m_iBlobsX, m_iBlobsY, CV_64FC2);
 		m_mCentroidGrid = 0;
 		
 		std::vector<Point> cartCoord;
 		cartCoord.clear();
 
-		cv::FileStorage fs("k11_cartCoord.xml", cv::FileStorage::READ);
+		int postIdx = m_sImgFileName.rfind('.');
+		int preIdx = m_sImgFileName.rfind('\\');
+		std::string cartFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_cartCoord.xml";
+		cv::FileStorage fs(cartFileName, cv::FileStorage::READ);
 		fs["cartMat"] >> cartCoord;
 
 		Point origin = cartCoord[0];
@@ -250,7 +290,7 @@ namespace cv
 
 
 		//find the first line of the centroids
-		for (int i = 1; i < 3; i++)
+		for (int i = 1; i < m_iBlobsX-1; i++)
 		{
 			std::vector<int> idx;
 			sortTheDistFromThePoint(co, mc, idx);
@@ -368,7 +408,7 @@ namespace cv
 		int i = 0;
 		co = ccy;
 		v = co - cco;
-		for (int j = 1; j < 3; j++)
+		for (int j = 1; j < m_iBlobsY-1; j++)
 		{
 			std::vector<int> idx;
 			sortTheDistFromThePoint(co, mc, idx);
@@ -482,6 +522,81 @@ namespace cv
 			DeleteOneColOfMat(mc, indxy[0]);
 		}
 		
+		double costol = cos(30.0/180.0*CV_PI);
+		for (int j = 1; j < m_iBlobsY; j++)
+		{
+			for (int i = 1; i < m_iBlobsX; i++)
+			{
+				if ((i==m_iBlobsX-1) && (j==m_iBlobsY-1))
+				{
+					m_mCentroidGrid.at<Vec2d>(j, i) = mc.col(0);
+				}
+				else
+				{
+					Mat leftTopMat;
+					std::vector<int> sind;
+					int size[2] = {3, 2};
+					Vec2d v1 = m_mCentroidGrid.at<Vec2d>(j-1, i-1);
+					Vec2d v2 = m_mCentroidGrid.at<Vec2d>(j-1, i);
+					Vec2d v3 = m_mCentroidGrid.at<Vec2d>(j, i-1);
+					leftTopMat.push_back(v1);
+					leftTopMat.push_back(v2);
+					leftTopMat.push_back(v3);
+					leftTopMat = leftTopMat.reshape(1).t();
+					sind.clear();
+					sortTheDistFromThreePoint(leftTopMat, mc, sind);
+
+					Mat cclose;
+					if (sind.size() > 2)
+					{
+						cclose.create(2, 3, mc.type());
+						cclose = 0;
+						for(size_t i = 0; i < 3; i++)
+						{
+							mc.col(sind[i]).copyTo(cclose.col(i));
+						}
+					}
+					else
+					{
+						cclose.create(2, 2, mc.type());
+						cclose = 0;
+						for(size_t i = 0; i < 2; i++)
+						{
+							mc.col(sind[i]).copyTo(cclose.col(i));
+						}
+					}
+					Vec2d v = v2 - v1;
+					Mat mv3(v3);
+					Mat vs = mv3 * Mat::ones(1, cclose.cols, mc.type());
+					subtract(cclose, vs, vs);
+					std::vector<double> cosa;
+					cosa.clear();
+					for (int k = 0; k < cclose.cols; k++)
+					{
+						Mat tmp = Mat(v).t() * vs.col(k);
+						double tcos = tmp.at<double>(0,0) / (norm(v)*norm(vs.col(k)));
+						cosa.push_back(tcos);
+					}
+					std::vector<double>::iterator maxIter = std::max_element(cosa.begin(), cosa.end());
+					int maxind = std::distance(cosa.begin(), maxIter);
+					int minind = 0;
+					if (cosa[0] > costol)
+					{
+						minind = sind[0];
+					}
+					else if (cosa[0] < costol && cosa[1] > costol)
+					{
+						minind = sind[1];
+					}
+					else
+					{
+						minind = sind[maxind];
+					}
+					m_mCentroidGrid.at<Vec2d>(j, i) = mc.col(minind);
+					DeleteOneColOfMat(mc, minind);
+				}
+			}
+		}
 
 
 		return m_mCentroidGrid;
