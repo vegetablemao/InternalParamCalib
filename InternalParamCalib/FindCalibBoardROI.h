@@ -7,7 +7,7 @@
 #include <opencv2/highgui/highgui.hpp>  // OpenCV window I/O
 #include <opencv2/imgproc/imgproc.hpp> 
 
-#define SAVE_PATH ".\\elead_store"
+#define SAVE_PATH ".\\elead_intermediate_"
 
 /************************************************************************/
 /* this class is used to choose the ROI of the input image with mouse.  */
@@ -19,10 +19,9 @@ public:
 	virtual ~findCalibROI();
 	virtual int init(const std::string& pathName);
 	void destroyAll();
-	void saveROIImage();
 	void reset();
 	void nextImage();
-	const cv::Mat& getBlobsImg();
+	void saveIntermediateFiles();
 	const std::vector<cv::Point>& getCartCoord() const
 	{
 		return m_vCartCoord;
@@ -39,12 +38,16 @@ protected:
 
 private:
 	static void onMouse( int event, int x, int y, int, void* p);
+	int createDir(const std::string& directory);
+	void saveROIImage();
+	void saveBlobsImg();
+	void saveXMLFile();
 
 private:
 	cv::Mat m_mInputImg, m_mScribbleImg;	//color image for show
-	cv::Mat m_mScribbleMask;	//mask
-	cv::Mat m_mBlobImg;			//blobs
-	cv::Mat m_mInputGrayImg,  m_mROIImg; //8 bit gray images
+	cv::Mat m_mScribbleMask;				//mask
+	cv::Mat m_mBlobImg;						//blobs
+	cv::Mat m_mInputGrayImg,  m_mROIImg;	//8 bit gray images
 	int m_iscribbleRadius;
 
 	bool m_bRButtonDown;
@@ -57,6 +60,7 @@ private:
 	std::vector<cv::Point> m_vHullPointList;
 
 	std::string m_sPathName;
+	std::string m_sSubDir;
 	
 	int m_iCartCoordCnt;
 };

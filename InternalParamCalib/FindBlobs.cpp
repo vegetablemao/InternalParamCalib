@@ -12,12 +12,13 @@ namespace cv
 
 	findBlobs::~findBlobs() {}
 
-	int findBlobs::init(const std::string& imgFileName)
+	/*int findBlobs::init(const std::string& imgFileName)
 	{
 		m_vContours.clear();
 		return findCalibROI::init(imgFileName);
 
-	}
+	}*/
+
 	const contourContainer& findBlobs::findBlobsContours(const FileStorage& blobImgFile)
 	{
 		m_vContours.clear();
@@ -29,18 +30,19 @@ namespace cv
 			std::cout << "couldn't find any contours!" << std::endl;
 			return m_vContours;
 		}
-		blobImgFile["fileName"] >> m_sImgFileName;
-		blobImgFile["blobX"] >> m_iBlobsX;
-		blobImgFile["blobY"] >> m_iBlobsY;
+		blobImgFile["subDirectory"] >> m_sSubDirectory;
+		blobImgFile["imageFileName"] >> m_sImageFileName;
+		blobImgFile["cartMat"] >> m_vCartCoord;
+		blobImgFile["blobX"] >> m_uBlobX;
+		blobImgFile["blobY"] >> m_uBlobY;
+
 		m_mOutputImg = Mat::zeros(blobImg.rows, blobImg.cols, CV_8UC3);
-		int numOfBlobs = m_iBlobsX * m_iBlobsY;
+		int numOfBlobs = m_uBlobX * m_uBlobY;
 		std::sort(m_vContours.begin(), m_vContours.end(), greaterMark); //sort the contours from big to small, we only need the biggest numOfBlobs contours.
 		m_vContours.erase(m_vContours.begin()+numOfBlobs, m_vContours.end()); //erase the smallest contours
 
 		drawContours(m_mOutputImg, m_vContours, -1, CV_RGB(255,255,255));
-		int postIdx = m_sImgFileName.rfind('.');
-		int preIdx = m_sImgFileName.rfind('\\');
-		std::string contourFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_contours.jpg";
+		std::string contourFileName = m_sSubDirectory + "\\" + m_sImageFileName + "_contours.jpg";
 		imwrite(contourFileName, m_mOutputImg);
 		return m_vContours;
 	}
@@ -69,12 +71,10 @@ namespace cv
 			}
 		}
 		
-		int postIdx = m_sImgFileName.rfind('.');
-		int preIdx = m_sImgFileName.rfind('\\');
-		std::string centImgName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.jpg";
-		std::string centXMLFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_centroids.xml";
+		std::string centImgName = m_sSubDirectory + "\\" + m_sImageFileName + "_centroids.jpg";
 		imwrite(centImgName, m_mOutputImg);
 
+		std::string centXMLFileName = m_sSubDirectory + "\\" + m_sImageFileName + "_centroids.xml";
 		cv::FileStorage fs(centXMLFileName, cv::FileStorage::WRITE);
 		fs << "centroidsMat" << m_vCentroids;
 		fs.release();
@@ -213,21 +213,12 @@ namespace cv
 
 	const Mat& findBlobs::findCentroidGrid()
 	{
-		m_mCentroidGrid.create(m_iBlobsX, m_iBlobsY, CV_64FC2);
+		m_mCentroidGrid.create(m_uBlobX, m_uBlobY, CV_64FC2);
 		m_mCentroidGrid = 0;
-		
-		std::vector<Point> cartCoord;
-		cartCoord.clear();
 
-		int postIdx = m_sImgFileName.rfind('.');
-		int preIdx = m_sImgFileName.rfind('\\');
-		std::string cartFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_cartCoord.xml";
-		cv::FileStorage fs(cartFileName, cv::FileStorage::READ);
-		fs["cartMat"] >> cartCoord;
-
-		Point origin = cartCoord[0];
-		Point x1 = cartCoord[1];
-		Point y1 = cartCoord[2];
+		Point origin = m_vCartCoord[0];
+		Point x1 = m_vCartCoord[1];
+		Point y1 = m_vCartCoord[2];
 		Mat mc = Mat(m_vCentroids).reshape(1).t();
 
 		//find the left top three points in the centroids.
@@ -261,7 +252,7 @@ namespace cv
 
 
 		//find the first line of the centroids
-		for (int i = 1; i < m_iBlobsX-1; i++)
+		for (int i = 1; i < m_uBlobX-1; i++)
 		{
 			std::vector<int> idx;
 			sortTheDistFromThePoint(co, mc, idx);
@@ -379,7 +370,7 @@ namespace cv
 		int i = 0;
 		co = ccy;
 		v = co - cco;
-		for (int j = 1; j < m_iBlobsY-1; j++)
+		for (int j = 1; j < m_uBlobY-1; j++)
 		{
 			std::vector<int> idx;
 			sortTheDistFromThePoint(co, mc, idx);
@@ -494,11 +485,11 @@ namespace cv
 		}
 		
 		double costol = cos(30.0/180.0*CV_PI);
-		for (int j = 1; j < m_iBlobsY; j++)
+		for (int j = 1; j < m_uBlobY; j++)
 		{
-			for (int i = 1; i < m_iBlobsX; i++)
+			for (int i = 1; i < m_uBlobX; i++)
 			{
-				if ((i==m_iBlobsX-1) && (j==m_iBlobsY-1))
+				if ((i==m_uBlobX-1) && (j==m_uBlobX-1))
 				{
 					m_mCentroidGrid.at<Vec2d>(j, i) = mc.col(0);
 				}
@@ -568,11 +559,11 @@ namespace cv
 				}
 			}
 		}
-		std::string centGridXMLFileName = m_sImgFileName.substr(preIdx+1, postIdx-preIdx-1) + "_centroidsGrid.xml";
 
-		cv::FileStorage fs1(centGridXMLFileName, cv::FileStorage::WRITE);
-		fs1 << "centroidsGridM" << m_mCentroidGrid;
-		fs1.release();
+		std::string centXMLFileName = m_sSubDirectory + "\\" + m_sImageFileName + "_centroidsGrid.xml";
+		cv::FileStorage fs(centXMLFileName, cv::FileStorage::WRITE);
+		fs << "centroidsGridMat" << m_mCentroidGrid;
+		fs.release();
 
 		return m_mCentroidGrid;
 	}

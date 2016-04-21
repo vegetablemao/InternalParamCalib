@@ -14,6 +14,60 @@ findCalibROI::~findCalibROI()
 	destroyAll();
 }
 
+int findCalibROI::init(const std::string& pathName)
+{
+	std::cout << "Please input the number of blobs in x-direction:";
+	std::cin >> m_iBlobsX;
+	std::cout << "Please input the number of blobs in y-direction:";
+	std::cin >> m_iBlobsY;
+
+	m_sPathName = pathName;
+	int postIdx = pathName.rfind('.');
+	int preIdx = pathName.rfind('\\');
+	m_sImgFileName = pathName.substr(preIdx+1, postIdx-preIdx-1);
+
+	//create the directory to store the Intermediate file
+	std::string directory = std::string(SAVE_PATH);
+	createDir(directory);
+
+	m_bRButtonDown = false;
+	m_bLButtonDown = false;
+	m_iscribbleRadius = 2;
+	m_iCartCoordCnt = 3;
+
+	m_vPointList.clear();
+	m_vHullPointList.clear();
+	m_vCartCoord.clear();
+
+	m_mInputImg = cv::imread(pathName, CV_LOAD_IMAGE_COLOR);
+	if(!m_mInputImg.data )                              
+	{
+		std::cout <<  "Could not open or find the image: " << pathName << std::endl ;
+		return -1;
+	}
+	m_uiRows = m_mInputImg.rows;
+	m_uiCols = m_mInputImg.cols;
+	cv::cvtColor(m_mInputImg, m_mInputGrayImg, CV_BGR2GRAY);//opencv default: BGR
+	m_mScribbleImg = m_mInputImg.clone();
+
+	m_mScribbleMask.create(2,m_mInputImg.size, CV_8UC1);
+	m_mScribbleMask = 0;
+
+	// Create a window for display.
+	cv::namedWindow( "Scribble Image", cv::WINDOW_AUTOSIZE);
+
+	// Show our image inside it.
+	cv::imshow("Scribble Image", m_mScribbleImg);
+	std::cout << "Click a polygon that encloses the calibration pattern. " << std::endl;
+
+	cv::moveWindow("Scribble Image", 300, 0);
+
+	// set the callback on mouse
+	cv::setMouseCallback("Scribble Image", onMouse, this);
+
+	return 0;
+}
+
 void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 {
 	findCalibROI* self = static_cast<findCalibROI*>(p);
@@ -107,71 +161,12 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 	
 
 	cv::imshow("Scribble Image", self->m_mScribbleImg);
-	std::ofstream ofs("cartCoord.txt", std::ofstream::out);
-	ofs << self->m_vCartCoord;
-	ofs.close();
-
-	//cv::imshow("Mask Image", self->m_mScribbleMask);
-}
-
-int findCalibROI::init(const std::string& pathName)
-{
-	std::cout << "Please input the number of blobs in x-direction:";
-	std::cin >> m_iBlobsX;
-	std::cout << "Please input the number of blobs in y-direction:";
-	std::cin >> m_iBlobsY;
-
-	m_sPathName = pathName;
-	int postIdx = pathName.rfind('.');
-	int preIdx = pathName.rfind('\\');
-	m_sImgFileName = pathName.substr(preIdx+1, postIdx-preIdx-1);
-
-	m_bRButtonDown = false;
-	m_bLButtonDown = false;
-	m_iscribbleRadius = 2;
-	m_iCartCoordCnt = 3;
-
-	m_vPointList.clear();
-	m_vHullPointList.clear();
-	m_vCartCoord.clear();
-
-	m_mInputImg = cv::imread(pathName, CV_LOAD_IMAGE_COLOR);
-	if(!m_mInputImg.data )                              
-	{
-		std::cout <<  "Could not open or find the image: " << pathName << std::endl ;
-		return -1;
-	}
-	m_uiRows = m_mInputImg.rows;
-	m_uiCols = m_mInputImg.cols;
-	cv::cvtColor(m_mInputImg, m_mInputGrayImg, CV_BGR2GRAY);//opencv default: BGR
-	m_mScribbleImg = m_mInputImg.clone();
-
-	m_mScribbleMask.create(2,m_mInputImg.size, CV_8UC1);
-	m_mScribbleMask = 0;
-
-	// Create a window for display.
-	cv::namedWindow( "Scribble Image", cv::WINDOW_AUTOSIZE);
-	//cv::namedWindow( "Mask Image", cv::WINDOW_AUTOSIZE );
-
-	// Show our image inside it.
-	cv::imshow("Scribble Image", m_mScribbleImg);
-	std::cout << "Click a polygon that encloses the calibration pattern. " << std::endl;
-	//cv::imshow("Mask Image", m_mScribbleMask);
-
-	cv::moveWindow("Scribble Image", 300, 0);
-	//cv::moveWindow("Mask Image", m_mInputImg.cols + 50, 1);
-
-	// set the callback on mouse
-	cv::setMouseCallback("Scribble Image", onMouse, this);
-
-	return 0;
 }
 
 void findCalibROI::destroyAll()
 {
 	// destroy all windows
 	cv::destroyWindow("Scribble Image");
-	//cv::destroyWindow("Mask Image");
 
 	// clear all data
 	m_mScribbleMask.release();
@@ -179,22 +174,6 @@ void findCalibROI::destroyAll()
 	m_mScribbleImg.release();
 	m_mROIImg.release();
 	m_mInputGrayImg.release();
-}
-
-void findCalibROI::saveROIImage()
-{
-	std::cout << "saving ROI image from file "  << m_sImgFileName << " ..." << std::endl;
-
-	std::string saveName = m_sImgFileName + "_ROI.jpg" ;
-	m_mInputGrayImg.copyTo(m_mROIImg, m_mScribbleMask);
-	cv::imwrite(saveName, m_mROIImg);
-
-	std::string cartFileName = m_sImgFileName + "_cartCoord.xml" ;
-	cv::FileStorage fs(cartFileName, cv::FileStorage::WRITE);
-	fs << "cartMat" << m_vCartCoord;
-	fs.release();
-	
-	std::cout << "save succeessfully in " << saveName << "!" << std::endl;
 }
 
 void findCalibROI::reset()
@@ -220,7 +199,49 @@ void findCalibROI::nextImage()
 	}
 }
 
-const cv::Mat& findCalibROI::getBlobsImg()
+int findCalibROI::createDir(const std::string& directory)
+{
+	std::string subDir = directory + "\\" + m_sImgFileName;
+	m_sSubDir = subDir;
+	int ret = _access(directory.c_str(), 0);
+	if (-1 == ret)
+	{
+		if (_mkdir(directory.c_str()) == 0)
+		{
+			std::cout << "directory" << directory << "has been created successfully!" << std::endl;
+		}
+		else
+		{
+			std::cout << "Problem creating directory" << directory << std::endl;
+			return 0;
+		}
+	}
+
+	ret = _access(subDir.c_str(), 0);
+	if (_mkdir(subDir.c_str()) == 0)
+	{
+		std::cout << "subDir" << subDir << "has been created successfully!" << std::endl;
+		return 1;
+	}
+	else
+	{
+		std::cout << "Problem creating subDir" << subDir << std::endl;
+		return 0;
+	}
+}
+
+void findCalibROI::saveROIImage()
+{
+	std::cout << "saving ROI image from file "  << m_sSubDir << "\\" <<m_sImgFileName << " ..." << std::endl;
+
+	std::string saveName = m_sSubDir + "\\" + m_sImgFileName + "_ROI.jpg" ;
+	m_mInputGrayImg.copyTo(m_mROIImg, m_mScribbleMask);
+	cv::imwrite(saveName, m_mROIImg);
+
+	std::cout << "save succeessfully in " << saveName << "!" << std::endl;
+}
+
+void findCalibROI::saveBlobsImg()
 {
 	m_mBlobImg.create(2, m_mInputGrayImg.size, m_mInputGrayImg.type());
 	m_mBlobImg = 0;
@@ -234,46 +255,26 @@ const cv::Mat& findCalibROI::getBlobsImg()
 	cv::Mat roiBImg(m_mBlobImg, bRect);
 	blobImg.copyTo(roiBImg);
 
-
-
-	std::string directory = std::string(SAVE_PATH);
-	std::string subDir = directory + "\\" + m_sImgFileName;
-	int ret = _access(directory.c_str(), 0);
-	if (-1 == ret)
-	{
-		if (_mkdir(directory.c_str()) == 0)
-		{
-			std::cout << "directory" << directory << "has been created successfully!" << std::endl;
-		}
-		else
-		{
-			std::cout << "Problem creating directory" << directory << std::endl;
-		}
-	}
-
-	ret = _access(subDir.c_str(), 0);
-	if (_mkdir(subDir.c_str()) == 0)
-	{
-		std::cout << "subDir" << subDir << "has been created successfully!" << std::endl;
-	}
-	else
-	{
-		std::cout << "Problem creating subDir" << subDir << std::endl;
-	}
-
-
-	
-	std::string saveName = subDir + "\\" + m_sImgFileName + "_Blobs.jpg" ;
+	std::string saveName = m_sSubDir + "\\" + m_sImgFileName + "_Blobs.jpg" ;
 	cv::imwrite(saveName, m_mBlobImg);
+}
 
-	std::string xmlFilename = subDir + "\\" + m_sImgFileName + "_Blobs.xml" ;
+void findCalibROI::saveXMLFile()
+{
+	std::string xmlFilename = m_sSubDir + "\\" + m_sImgFileName + "_BlobsAndCartCoord.xml" ;
 	cv::FileStorage fs(xmlFilename, cv::FileStorage::WRITE);
-	fs << "fileName" << m_sImgFileName;
+	fs << "subDirectory" << m_sSubDir;
+	fs << "imageFileName" << m_sImgFileName;
 	fs << "blobX" << m_iBlobsX;
 	fs << "blobY" << m_iBlobsY;
+	fs << "cartMat" << m_vCartCoord;
 	fs << "blobsMat" << m_mBlobImg;
 	fs.release();
+}
 
-
-	return m_mBlobImg;
+void findCalibROI::saveIntermediateFiles()
+{
+	saveROIImage();
+	saveBlobsImg();
+	saveXMLFile();
 }

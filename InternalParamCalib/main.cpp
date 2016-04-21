@@ -25,18 +25,7 @@ void test1(std::string filename)
 
 		case 's':
 			{
-				findROI.saveROIImage();
-				findROI.getBlobsImg();
-				//fb.findCentroids();
-				//fb.findCentroidGrid();
-				//test
-				const std::vector<cv::Point> &coord = findROI.getCartCoord();
-				if (coord.size() == 3)
-				{
-					std::cout << "coord[0]:(" << coord[0].x <<","<< coord[0].y <<")"<< std::endl;
-					std::cout << "coord[1]:(" << coord[1].x <<","<< coord[1].y <<")"<< std::endl;
-					std::cout << "coord[2]:(" << coord[2].x <<","<< coord[2].y <<")"<< std::endl;
-				}
+				findROI.saveIntermediateFiles();
 				break;
 			}
 		case 'r':
@@ -76,10 +65,10 @@ int main(int argc, char *argv[])
 	std::cin >> filename;*/
 
 
-	char * defaultBlobsFileName = "k11_Blobs.xml";
+	char * defaultBlobsFileName = "elead_intermediate_\\k11\\k11_BlobsAndCartCoord.xml";
 	char * defaultInputFileName = "elead\\k11.jpg";
-	test1(defaultInputFileName);
-	//test2(defaultBlobsFileName);
+	//test1(defaultInputFileName);
+	test2(defaultBlobsFileName);
 
 	
 

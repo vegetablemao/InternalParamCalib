@@ -16,12 +16,12 @@ namespace cv
 	typedef std::vector<contourType> contourContainer;
 	typedef std::vector<Point2d> centroidContainer;
 	
-	class findBlobs : public findCalibROI
+	class findBlobs //: public findCalibROI
 	{
 	public:
 		findBlobs();
 		virtual ~findBlobs();
-		virtual int init(const std::string& imgFileName);
+		//virtual int init(const std::string& imgFileName);
 		const contourContainer& findBlobsContours(const FileStorage& blobImgFile);
 		const centroidContainer& findCentroids(/*const contourContainer& contours*/);
 		const Mat& findCentroidGrid();
@@ -40,6 +40,13 @@ namespace cv
 		
 		Mat m_mCentroidGrid;
 		Mat m_mOutputImg;
+
+		std::string m_sImageFileName;
+		std::string m_sSubDirectory;
+		std::vector<Point> m_vCartCoord;
+
+		int m_uBlobX, m_uBlobY;
+
 	};
 }
 

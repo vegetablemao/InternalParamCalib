@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <opencv_storage>
-<centroidsGridM type_id="opencv-matrix">
+<centroidsGridMat type_id="opencv-matrix">
   <rows>4</rows>
   <cols>4</cols>
   <dt>"2d"</dt>
@@ -20,5 +20,5 @@
     4.6724263839811539e+002 3.7086219081272083e+002
     4.3343910256410254e+002 3.7322542735042731e+002
     3.9668315018315013e+002 3.7454029304029302e+002
-    3.5789444444444445e+002 3.7455555555555554e+002</data></centroidsGridM>
+    3.5789444444444445e+002 3.7455555555555554e+002</data></centroidsGridMat>
 </opencv_storage>
