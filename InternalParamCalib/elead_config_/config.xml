@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<!--the distance between circles in the calibration plane in mm-->
+<blobgapx>76</blobgapx>
+<blobgapy>76</blobgapy>
+<!--usually 0, change to 1 for such catadioptric cameras which reverse the handedness of coordinates on the calibration plane due to the mirroring effect-->
+<cata>0</cata>>
+<!--radius of the circular control points in mm if the "points" are really points then 0 org = 20-->
+<blobradius>20</blobradius>
+<projtype>"equidistance"</projtype>
+<model>"extended"</model>
+<focal>1.05</focal>
+<viewfield>180</viewfield>
+<pixelp>178 178 360 240</pixelp>
+</opencv_storage>
