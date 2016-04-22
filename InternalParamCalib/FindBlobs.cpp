@@ -1,6 +1,7 @@
 #include "FindBlobs.h"
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 #include <math.h>
 
 namespace cv
@@ -10,7 +11,10 @@ namespace cv
 
 	}
 
-	findBlobs::~findBlobs() {}
+	findBlobs::~findBlobs() 
+	{
+		destroyWindow("labled centroids");
+	}
 
 	/*int findBlobs::init(const std::string& imgFileName)
 	{
@@ -566,6 +570,27 @@ namespace cv
 		fs.release();
 
 		return m_mCentroidGrid;
+	}
+
+	void findBlobs::blobvis()
+	{
+		for (int k=0; k < m_uBlobX; k++)
+		{
+			for (int l=0; l < m_uBlobY; l++)
+			{
+				std::stringstream tex;
+				tex << l;
+				tex << ',';
+				tex << k;
+				Point pt;
+				pt.x =  m_mCentroidGrid.at<Vec2d>(l, k).val[0] + 2;
+				pt.y =  m_mCentroidGrid.at<Vec2d>(l, k).val[1] + 2;
+				putText(m_mOutputImg, tex.str(), pt, FONT_HERSHEY_PLAIN, 0.8, CV_RGB(255,0,0));
+				 
+			}
+		}
+		namedWindow( "labled centroids", cv::WINDOW_AUTOSIZE);
+		imshow("labled centroids", m_mOutputImg);
 	}
 
 }

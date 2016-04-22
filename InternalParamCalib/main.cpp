@@ -46,32 +46,43 @@ void test2(std::string filename)
 {
 	cv::findBlobs fb;
 	cv::FileStorage fs(filename, cv::FileStorage::READ);
-	//cv::Mat blobImg;
-	//fs["blobsMat"] >> blobImg;
-	//cv::cvtColor(blobImg, blobImg, CV_RGB2GRAY);
-	const cv::contourContainer &contours = fb.findBlobsContours(fs);
+
+	fb.findBlobsContours(fs);
 	fb.findCentroids();
 	fb.findCentroidGrid();
-	//blobImg.convertTo(blobImg, CV_16UC2);
-	//std::cout << blobImg.elemSize() << " " << blobImg.elemSize1() << std::endl;
-	//std::cout << blobImg.type() << std::endl;
+	fb.blobvis();
+
+	char key = cv::waitKey(0);
+	if (key == 'q')
+	{
+		std::cout << "goodbye!!" << std::endl;
+	}
+
 }
 
 int main(int argc, char *argv[])
 {
+	char * defaultBlobsFileName = "elead_intermediate_\\k13\\k13_BlobsAndCartCoord.xml";
+	char * defaultInputFileName = "elead\\k11.jpg";
 
 	/*std::string filename;
 	std::cout << "input image filename:" << std::endl;
 	std::cin >> filename;*/
 
-
-	char * defaultBlobsFileName = "elead_intermediate_\\k11\\k11_BlobsAndCartCoord.xml";
-	char * defaultInputFileName = "elead\\k11.jpg";
-	//test1(defaultInputFileName);
-	test2(defaultBlobsFileName);
-
-	
-
+	int testNum = 0;
+	std::cout << "input the test case number:" << std::endl;
+	std::cin >> testNum;
+	switch (testNum)
+	{
+	case 1:
+		test1(defaultInputFileName);
+		break;
+	case 2:
+		test2(defaultBlobsFileName);
+		break;
+	default:
+		break;
+	}
 
 	return 0;
 }

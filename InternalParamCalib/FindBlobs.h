@@ -25,6 +25,7 @@ namespace cv
 		const contourContainer& findBlobsContours(const FileStorage& blobImgFile);
 		const centroidContainer& findCentroids(/*const contourContainer& contours*/);
 		const Mat& findCentroidGrid();
+		void blobvis();
 		
 	private:
 		static bool greaterMark(const contourType& s1, const contourType& s2) { return s1.size() > s2.size() ;}

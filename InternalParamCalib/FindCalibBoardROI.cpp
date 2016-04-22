@@ -28,7 +28,12 @@ int findCalibROI::init(const std::string& pathName)
 
 	//create the directory to store the Intermediate file
 	std::string directory = std::string(SAVE_PATH);
-	createDir(directory);
+	if (!createDir(directory))
+	{
+		std::cout << "create dir failed" << std::endl;
+		return -1;
+	}
+	
 
 	m_bRButtonDown = false;
 	m_bLButtonDown = false;
@@ -188,11 +193,12 @@ void findCalibROI::reset()
 
 void findCalibROI::nextImage()
 {
-	std::cout << "please input the name of next image:" << std::endl;
+	destroyAll();
+	std::cout << "please input the path of next image:" << std::endl;
 	std::string pathName;
 	std::cin >> pathName;
 	m_sPathName = pathName;
-	destroyAll();
+	
 	if (init(m_sPathName) == -1)
 	{
 		std::cout <<  "could not initialize" << std::endl ;
@@ -218,16 +224,20 @@ int findCalibROI::createDir(const std::string& directory)
 	}
 
 	ret = _access(subDir.c_str(), 0);
-	if (_mkdir(subDir.c_str()) == 0)
+	if (-1 == ret)
 	{
-		std::cout << "subDir" << subDir << "has been created successfully!" << std::endl;
-		return 1;
+		if (_mkdir(subDir.c_str()) == 0)
+		{
+			std::cout << "subDir" << subDir << "has been created successfully!" << std::endl;
+			return 1;
+		}
+		else
+		{
+			std::cout << "Problem creating subDir" << subDir << std::endl;
+			return 0;
+		}
 	}
-	else
-	{
-		std::cout << "Problem creating subDir" << subDir << std::endl;
-		return 0;
-	}
+
 }
 
 void findCalibROI::saveROIImage()
