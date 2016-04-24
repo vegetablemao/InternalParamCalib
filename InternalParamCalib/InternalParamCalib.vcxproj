@@ -34,7 +34,7 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\ocv2412.company.props" />
+    <Import Project="..\ocv2412.home.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -77,10 +77,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="calibrate.h" />
     <ClInclude Include="FindBlobs.h" />
     <ClInclude Include="FindCalibBoardROI.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="calibrate.cpp" />
     <ClCompile Include="FindBlobs.cpp" />
     <ClCompile Include="FindCalibBoardROI.cpp" />
     <ClCompile Include="main.cpp" />

@@ -4,6 +4,10 @@
 #define CALIBRATE_H
 
 #include <string>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+
 
 namespace cv
 {
@@ -34,8 +38,14 @@ namespace cv
 
 		calibrate();
 		virtual ~calibrate();
-	private:
+		void readCentroidsGrid(const FileStorage& centGridFS);
 
+	private:
+		void planecoords();
+
+	private:
+		sysConfig m_sysCfg;
+		Mat m_mCoordMat;
 	};
 }
 
