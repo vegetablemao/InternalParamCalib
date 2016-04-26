@@ -11,6 +11,7 @@
 
 namespace cv
 {
+	typedef std::vector<Mat> centroidsGridContainer;
 	class calibrate
 	{
 	public:
@@ -46,6 +47,7 @@ namespace cv
 	private:
 		sysConfig m_sysCfg;
 		Mat m_mCoordMat;
+		centroidsGridContainer m_vCentGrids;
 	};
 }
 

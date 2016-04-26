@@ -27,6 +27,7 @@ namespace cv
 	{
 		Mat centroidsGrid;
 		centGridFS["centroidsGridMat"] >> centroidsGrid;
+		m_vCentGrids.push_back(centroidsGrid);
 
 	}
 

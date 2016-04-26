@@ -20,7 +20,7 @@ public:
 	virtual int init(const std::string& pathName);
 	void destroyAll();
 	void reset();
-	void nextImage();
+	void nextImage(const std::string& pathName);
 	void saveIntermediateFiles();
 	const std::vector<cv::Point>& getCartCoord() const
 	{

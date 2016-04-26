@@ -27,7 +27,10 @@ int findCalibROI::init(const std::string& pathName)
 	m_sImgFileName = pathName.substr(preIdx+1, postIdx-preIdx-1);
 
 	//create the directory to store the Intermediate file
-	std::string directory = std::string(SAVE_PATH);
+	int firstSL = pathName.find('\\');
+
+	std::string directory = pathName.substr(0, preIdx);
+	directory.append("_intermediate_");
 	if (!createDir(directory))
 	{
 		std::cout << "create dir failed" << std::endl;
@@ -104,7 +107,7 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 					cv::circle(self->m_mScribbleImg, cv::Point(x,y),
 						self->m_iscribbleRadius, CV_RGB(255,0,0), -1, CV_AA);
 					cv::line(self->m_mScribbleImg, self->m_pPrePt,
-						cv::Point(x,y), CV_RGB(255,0,0), 2, CV_AA);
+						cv::Point(x,y), CV_RGB(255,0,0), 1, CV_AA);
 				}
 				self->m_pPrePt = cv::Point(x,y);
 			}
@@ -119,7 +122,7 @@ void findCalibROI::onMouse( int event, int x, int y, int, void* p)
 		{
 			cv::convexHull(self->m_vPointList, self->m_vHullPointList, true);
 			cv::line(self->m_mScribbleImg, self->m_pPrePt,
-				self->m_pFirstPt, CV_RGB(255,0,0), 2, CV_AA);
+				self->m_pFirstPt, CV_RGB(255,0,0), 1, CV_AA);
 			cv::fillConvexPoly(self->m_mScribbleMask, self->m_vHullPointList, 1, CV_AA);
 
 			self->m_bRButtonDown = true;
@@ -191,17 +194,17 @@ void findCalibROI::reset()
 	}
 }
 
-void findCalibROI::nextImage()
+void findCalibROI::nextImage(const std::string& pathName)
 {
 	destroyAll();
-	std::cout << "please input the path of next image:" << std::endl;
-	std::string pathName;
-	std::cin >> pathName;
+	//std::cout << "please input the path of next image:" << std::endl;
+	//std::string pathName;
+	//std::cin >> pathName;
 	m_sPathName = pathName;
 	
 	if (init(m_sPathName) == -1)
 	{
-		std::cout <<  "could not initialize" << std::endl ;
+		std::cout <<  "could not initialize" << m_sPathName << std::endl ;
 	}
 }
 
