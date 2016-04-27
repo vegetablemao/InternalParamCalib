@@ -4,7 +4,7 @@
 #include <iostream>
 #include <io.h>
 
-std::vector<std::string> fileNames;
+
 
 //get all file names under the path.
 void dir(std::string path, std::vector<std::string>& filenames)
@@ -20,7 +20,7 @@ void dir(std::string path, std::vector<std::string>& filenames)
 	do {
 		if (!(fileInfo.attrib&_A_SUBDIR))
 		{
-			std::cout << fileInfo.name << std::endl;
+			//std::cout << fileInfo.name << std::endl;
 			filenames.push_back(fileInfo.name);
 		}
 		//std::cout << fileInfo.name << (fileInfo.attrib&_A_SUBDIR? "[folder]":"[file]") << std::endl;
@@ -32,19 +32,30 @@ void dir(std::string path, std::vector<std::string>& filenames)
 
 void test1(std::string pathName)
 {
+	std::vector<std::string> fileNames;
 	std::vector<std::string> pathes;
+	std::vector<std::string> storeNames;
 	dir(pathName, fileNames);
 
-	cv::FileStorage fs(".\\fileNames.xml", cv::FileStorage::WRITE);
-	fs << "fileNames" << fileNames;
-	fs.release();
 	std::string path;
+	std::string store;
 	for (int i = 0; i < fileNames.size(); i++)
 	{
 		path.clear();
 		path.assign(pathName).append("\\").append(fileNames[i]);
 		pathes.push_back(path);
+
+		store.clear();
+		int idx = fileNames[i].find('.');
+		store.assign(fileNames[i].substr(0, idx));
+		storeNames.push_back(store);
 	}
+
+
+	cv::FileStorage fs(".\\fileNames.xml", cv::FileStorage::WRITE);
+	fs << "fileNames" << storeNames;
+	fs.release();
+
 	int cnt = 0;
 	//cv::findBlobs fb;
 	findCalibROI findROI;
@@ -91,22 +102,17 @@ void test1(std::string pathName)
 
 void test2(std::string pathName)
 {
+	std::vector<std::string> FileNames;
+	FileNames.clear();
 	cv::FileStorage fs0(".\\fileNames.xml", cv::FileStorage::READ);
-	fs0["fileNames"] >> fileNames;
-
-	std::vector<std::string> preFileNames;
-	for (int i = 0; i < fileNames.size(); i++)
-	{
-		int idx = fileNames[i].find('.');
-		preFileNames.push_back(fileNames[i].substr(0,idx));
-	}
+	fs0["fileNames"] >> FileNames;
 
 	std::vector<std::string> pathes;
 	std::string path;
-	for (int i = 0; i < preFileNames.size(); i++)
+	for (int i = 0; i < FileNames.size(); i++)
 	{
 		path.clear();
-		path.assign(pathName).append("\\").append(preFileNames[i]).append("\\").append(preFileNames[i]).append("_BlobsAndCartCoord.xml");
+		path.assign(pathName).append("\\").append(FileNames[i]).append("\\").append(FileNames[i]).append("_BlobsAndCartCoord.xml");
 		pathes.push_back(path);
 	}
 
@@ -146,13 +152,12 @@ void test2(std::string pathName)
 }
 
 
-void test3(std::string filename)
+void test3(std::string pathName)
 {
-	cv::calibrate calib;
-	cv::FileStorage fs(filename, cv::FileStorage::READ);
+	char* configPath = ".\\fisheye_config_\\config.xml";
+	cv::calibrate calib(configPath);
+	calib.readCentroidsGrid(pathName);
 
-	calib.readCentroidsGrid(fs);
-	fs.release();
 }
 
 int main(int argc, char *argv[])
@@ -181,7 +186,7 @@ int main(int argc, char *argv[])
 		test2(defaultPath2);
 		break;
 	case 3:
-		test3(defaultCentGridsFileName);
+		test3(defaultPath2);
 	default:
 		break;
 	}

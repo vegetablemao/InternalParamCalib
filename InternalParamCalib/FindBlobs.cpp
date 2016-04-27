@@ -217,7 +217,7 @@ namespace cv
 
 	const Mat& findBlobs::findCentroidGrid()
 	{
-		m_mCentroidGrid.create(m_uBlobX, m_uBlobY, CV_64FC2);
+		m_mCentroidGrid.create(m_uBlobY, m_uBlobX, CV_64FC2);
 		m_mCentroidGrid = 0;
 
 		Point origin = m_vCartCoord[0];

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<blobgapx>76</blobgapx>
+<blobgapy>76</blobgapy>
+<cata>0</cata>
+<blobradius>20</blobradius>
+<projtype>"equidistance"</projtype>
+<model>"extended"</model>
+<focal>1.3</focal>
+<viewfield>178</viewfield>
+<mu>157.48</mu>
+<mv>135.14</mv>
+<u0>360</u0>
+<v0>240</v0>
+</opencv_storage>

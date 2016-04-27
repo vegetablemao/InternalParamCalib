@@ -11,7 +11,7 @@
 
 namespace cv
 {
-	typedef std::vector<Mat> centroidsGridContainer;
+	typedef std::vector<Mat> MatContainer;
 	class calibrate
 	{
 	public:
@@ -38,16 +38,18 @@ namespace cv
 		}sysConfig, *psysConfig;
 
 		calibrate();
+		calibrate(const std::string& configPath);
 		virtual ~calibrate();
-		void readCentroidsGrid(const FileStorage& centGridFS);
+		void readConfigFile(const std::string& configPath);
+		void readCentroidsGrid(const std::string& pathName);
 
 	private:
 		void planecoords();
-
+		void initialiseInternalp();
 	private:
 		sysConfig m_sysCfg;
-		Mat m_mCoordMat;
-		centroidsGridContainer m_vCentGrids;
+		MatContainer m_vCoordMats;
+		MatContainer m_vCentGrids;
 	};
 }
 
