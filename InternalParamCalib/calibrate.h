@@ -12,6 +12,7 @@
 namespace cv
 {
 	typedef std::vector<Mat> MatContainer;
+	typedef std::vector<double> DoubleContainer;
 	class calibrate
 	{
 	public:
@@ -46,6 +47,7 @@ namespace cv
 	private:
 		void planecoords();
 		void initialiseInternalp();
+		void polyFitOddLsq(const DoubleContainer& x, const DoubleContainer& y, int n, DoubleContainer& coeff);
 	private:
 		sysConfig m_sysCfg;
 		MatContainer m_vCoordMats;

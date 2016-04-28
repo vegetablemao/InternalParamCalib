@@ -94,6 +94,7 @@ namespace cv
 		}
 
 		planecoords();
+		initialiseInternalp();
 	}
 
 	void calibrate::planecoords()
@@ -114,6 +115,65 @@ namespace cv
 			m_vCoordMats.push_back(coordmat);
 			coordmat.release();
 		}
+	}
 
+	void calibrate::initialiseInternalp()
+	{
+		DoubleContainer theta, cy, coeff;
+		int N = static_cast<int>( (m_sysCfg.viewfield/2) / 0.1 );
+		double thetamax = m_sysCfg.viewfield / 2 * CV_PI / 180;
+		double interval = 0.1 / 180 * CV_PI;
+				
+		theta.resize(N, 0);
+		cy.resize(N, 0);
+		for (int i = 0; i < N; i++)
+		{
+			theta[i] = i * interval;
+		}
+
+		if (!m_sysCfg.projtype.compare("equidistance"))
+		{
+			for (int i = 0; i < N; i++)
+			{
+				cy[i] = theta[i] * m_sysCfg.focal;
+			}
+		} 
+		else
+		{
+		}
+
+		polyFitOddLsq(theta, cy, 3, coeff);
+
+		double rmax = coeff[0]*thetamax + coeff[1]*std::pow(thetamax,3);
+
+	}
+
+	void calibrate::polyFitOddLsq(const DoubleContainer& x, const DoubleContainer& y, int n, DoubleContainer& coeff)
+	{
+		coeff.clear();
+		size_t M = x.size();
+		std::vector<int> pows;
+		pows.clear();
+		for (int i = 1; i <= n; i+=2)
+		{
+			pows.push_back(i);
+		}
+		size_t nodd = pows.size();
+		
+		Mat X;
+		Mat mx = Mat(x);
+		Mat my = Mat(y);
+		for (int i = 0; i < nodd; i++)
+		{
+			Mat tx = mx.clone();
+			int p = pows[i];
+			pow(tx, p, tx);
+			tx = tx.t();
+			X.push_back(tx);
+		}
+		X = X.t();
+
+		Mat mc = (X.t() * X).inv() * X.t() * my;//最小二乘法
+		coeff = mc.col(0);
 	}
 }
