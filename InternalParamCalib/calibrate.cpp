@@ -1,4 +1,6 @@
 #include "calibrate.h"
+#include <math.h>
+#include <iostream>
 
 namespace cv
 {
@@ -83,7 +85,7 @@ namespace cv
 
 		std::string path;
 		Mat centroidsGrid;
-		for (int i = 0; i < FileNames.size(); i++)
+		for (size_t i = 0; i < FileNames.size(); i++)
 		{
 			path.clear();
 			centroidsGrid.release();
@@ -129,23 +131,39 @@ namespace cv
 		for (int i = 0; i < N; i++)
 		{
 			theta[i] = i * interval;
-		}
 
-		if (!m_sysCfg.projtype.compare("equidistance"))
-		{
-			for (int i = 0; i < N; i++)
+			if (!m_sysCfg.projtype.compare("equidistance"))
 			{
 				cy[i] = theta[i] * m_sysCfg.focal;
+			} 
+			else if (!m_sysCfg.projtype.compare("perspective"))
+			{
+				cy[i] = std::tan(theta[i]) * m_sysCfg.focal;
 			}
-		} 
-		else
-		{
+			else if (!m_sysCfg.projtype.compare("stereographic"))
+			{
+				cy[i] = 2 * std::tan(theta[i]/2) * m_sysCfg.focal;
+			}
+			else if (!m_sysCfg.projtype.compare("equisolidangle"))
+			{
+				cy[i] = 2 * std::sin(theta[i]/2) * m_sysCfg.focal;
+			}
+			else if (!m_sysCfg.projtype.compare("orthographic"))
+			{
+				cy[i] = std::sin(theta[i]) * m_sysCfg.focal;
+			}
+			else
+			{
+				std::cerr << "Unknow projection type" << std::endl;
+			}
 		}
 
 		polyFitOddLsq(theta, cy, 3, coeff);
 
 		double rmax = coeff[0]*thetamax + coeff[1]*std::pow(thetamax,3);
 
+		m_vCoeffInit = coeff;
+		m_dThetamax = thetamax;
 	}
 
 	void calibrate::polyFitOddLsq(const DoubleContainer& x, const DoubleContainer& y, int n, DoubleContainer& coeff)
@@ -176,4 +194,10 @@ namespace cv
 		Mat mc = (X.t() * X).inv() * X.t() * my;//最小二乘法
 		coeff = mc.col(0);
 	}
+
+	void calibrate::findEllipse()
+	{
+
+	}
+
 }

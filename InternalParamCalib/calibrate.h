@@ -19,22 +19,22 @@ namespace cv
 
 		typedef struct _pixelp
 		{
-			float m_u;
-			float m_v;
-			float u0;
-			float v0;
+			double m_u;
+			double m_v;
+			double u0;
+			double v0;
 		}pixelp, *ppixelp;
 
 		typedef struct _sysConfig
 		{
-			float blobgapx;
-			float blobgapy;
+			double blobgapx;
+			double blobgapy;
 			bool cata;
-			float blobradius;
+			double blobradius;
 			std::string projtype;
 			std::string model;
-			float focal;
-			float viewfield;
+			double focal;
+			double viewfield;
 			pixelp cp;
 		}sysConfig, *psysConfig;
 
@@ -48,10 +48,14 @@ namespace cv
 		void planecoords();
 		void initialiseInternalp();
 		void polyFitOddLsq(const DoubleContainer& x, const DoubleContainer& y, int n, DoubleContainer& coeff);
+		void findEllipse();
 	private:
 		sysConfig m_sysCfg;
 		MatContainer m_vCoordMats;
 		MatContainer m_vCentGrids;
+		
+		DoubleContainer m_vCoeffInit;
+		double m_dThetamax;
 	};
 }
 

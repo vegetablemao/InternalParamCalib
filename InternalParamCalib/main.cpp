@@ -165,8 +165,8 @@ int main(int argc, char *argv[])
 	//char * defaultBlobsFileName = "elead_intermediate_\\k13\\k13_BlobsAndCartCoord.xml";
 	//char * defaultInputFileName = "elead\\k11.jpg";
 	//char * defaultCentGridsFileName = "elead_intermediate_\\k11\\k11_centroidsGrid.xml";
-	char * defaultPath1 = ".\\fisheye";
-	char * defaultPath2 = ".\\fisheye_intermediate_";
+	const char * defaultPath1 = ".\\fisheye";
+	const char * defaultPath2 = ".\\fisheye_intermediate_";
 
 	/*std::string filename;
 	std::cout << "input image filename:" << std::endl;
