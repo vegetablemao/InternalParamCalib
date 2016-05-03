@@ -197,7 +197,7 @@ namespace cv
 
 	void calibrate::findEllipse()
 	{
-
+		
 	}
 
 }
